@@ -91,7 +91,7 @@
     <div id="chat-box"></div>
     <form id="chat-form">
       <input type="text" id="question" placeholder="Ask a question..." required>
-      <button type="submit">ask</button>
+      <button type="submit">Ask</button>
     </form>
   </div>
 
@@ -116,7 +116,6 @@
 
       const data = await res.json();
 
-      // Отображение структурированных полей, если они есть
       let acurai = "";
       if (data.task || data.system || data.symptom || data.context) {
         acurai += `<div class="acurai-fields">`;
