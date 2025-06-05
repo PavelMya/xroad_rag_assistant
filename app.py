@@ -17,4 +17,10 @@ class Question(BaseModel):
 @app.post("/chat")
 async def chat_endpoint(q: Question):
     result = qa_chain.invoke({"question": q.question})
-    return JSONResponse({"answer": result["answer"]})
+    return JSONResponse({
+        "answer": result["answer"],
+        "task": result.get("task", ""),          # <- из цепочки
+        "system": result.get("system", ""),
+        "symptom": result.get("symptom", ""),
+        "context": result.get("context", "")
+    })

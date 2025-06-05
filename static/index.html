@@ -14,7 +14,6 @@
       align-items: flex-start;
       min-height: 100vh;
     }
-
     .container {
       background: white;
       width: 90%;
@@ -24,24 +23,13 @@
       border-radius: 12px;
       box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
     }
-
-    .logo {
-      text-align: center;
-      margin-bottom: 20px;
-    }
-
-    .logo img {
-      max-width: 180px;
-    }
-
     h1 {
       text-align: center;
       margin-bottom: 20px;
       color: #333;
     }
-
     #chat-box {
-      max-height: 400px;
+      max-height: 500px;
       overflow-y: auto;
       margin-bottom: 20px;
       padding: 10px;
@@ -49,26 +37,33 @@
       border-radius: 8px;
       background-color: #fafafa;
     }
-
     .question {
       font-weight: bold;
       margin: 10px 0 4px;
       color: #0066cc;
     }
-
     .answer {
-      margin-bottom: 15px;
+      margin-bottom: 20px;
       padding: 10px;
       background-color: #eef6ff;
       border-left: 4px solid #3399ff;
       border-radius: 5px;
     }
-
+    .acurai-fields {
+      font-size: 13px;
+      margin-bottom: 8px;
+      padding: 10px;
+      background-color: #f0f8ff;
+      border-radius: 6px;
+      border-left: 4px solid #87cefa;
+    }
+    .acurai-fields p {
+      margin: 4px 0;
+    }
     #chat-form {
       display: flex;
       gap: 10px;
     }
-
     #question {
       flex-grow: 1;
       padding: 10px;
@@ -76,7 +71,6 @@
       border-radius: 8px;
       font-size: 14px;
     }
-
     button {
       padding: 10px 20px;
       background-color: #3399ff;
@@ -86,7 +80,6 @@
       cursor: pointer;
       transition: background 0.2s ease;
     }
-
     button:hover {
       background-color: #0077dd;
     }
@@ -94,9 +87,6 @@
 </head>
 <body>
   <div class="container">
-    <div class="logo">
-      <img src="/static/logo.png" alt="Roksnet Logo">
-    </div>
     <h1>Chat with X-Road Docs</h1>
     <div id="chat-box"></div>
     <form id="chat-form">
@@ -125,7 +115,24 @@
       });
 
       const data = await res.json();
-      chatBox.innerHTML += `<div class="answer">💬 ${data.answer}</div>`;
+
+      // Отображение структурированных полей, если они есть
+      let acurai = "";
+      if (data.task || data.system || data.symptom || data.context) {
+        acurai += `<div class="acurai-fields">`;
+        if (data.task) acurai += `<p><strong>Task:</strong> ${data.task}</p>`;
+        if (data.system) acurai += `<p><strong>System:</strong> ${data.system}</p>`;
+        if (data.symptom) acurai += `<p><strong>Symptom:</strong> ${data.symptom}</p>`;
+        if (data.context) acurai += `<p><strong>Context:</strong> ${data.context}</p>`;
+        acurai += `</div>`;
+      }
+
+      chatBox.innerHTML += `
+        <div class="answer">
+          ${acurai}
+          💬 ${data.answer}
+        </div>
+      `;
       chatBox.scrollTop = chatBox.scrollHeight;
     });
   </script>
