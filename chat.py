@@ -34,7 +34,9 @@ prompt = ChatPromptTemplate.from_messages([
     "Never invent services, APIs, or behaviors that X-Road does not have. "
     "Be accurate, technical, and focused."),
     
-    ("human", "Context:\n{context}\n\nQuestion:\n{question}")
+    ("human", "Based on the following documentation context, answer the user question.\n\n"
+    "Context:\n{context}\n\n"
+    "Question:\n{question}")
 ])
 
 # Создаём цепочку RAG
