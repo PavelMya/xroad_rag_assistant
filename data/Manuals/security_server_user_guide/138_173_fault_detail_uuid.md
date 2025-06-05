@@ -1,0 +1,3 @@
+### 17.3 Fault Detail UUID
+
+In case a Security Server encounters an error condition during the message exchange, the Security Server returns a SOAP Fault message \[[PR-MESS](#Ref_PR-MESS)\] containing a UUID (a universally unique identifier, e.g. `1328e974-4fe5-412c-a4c4-f1ac36f20b14`) as the fault detail to the service client's information system. The UUID can be used to find the details of the occurred error from the `xroad-proxy` log.

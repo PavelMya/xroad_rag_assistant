@@ -1,0 +1,3 @@
+## 7 Manual Integration Testing in Detail
+
+This chapter contains the descriptions of manual test cases of the operational monitoring system. Manual test cases cover only the functionality that is not covered by automated integration tests. Manual integration tests are carried out on a pre-configured testing system with the required X-Road components installed and configured, as described in \[[TEST-OPMONSTRAT](#TEST-OPMONSTRAT)\].

@@ -1,0 +1,3 @@
+### 2.3 Message Body
+
+The message body MUST use Document/Literal-Wrapped SOAP encoding convention. According to this convention, both the body of the request and the response must be wrapped in an element. The element names of the request and response are correlated – if the request element is named `foo` then the response element is named `fooResponse`. Additionally, the name of the wrapper element of the request must match the `serviceCode` element of the `service` header field.

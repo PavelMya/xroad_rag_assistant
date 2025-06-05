@@ -1,0 +1,1 @@
+# acquired externally from the CA. If the CA supports kid-based certificate type selection, then credentials starting

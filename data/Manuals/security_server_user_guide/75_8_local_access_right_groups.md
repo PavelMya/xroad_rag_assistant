@@ -1,0 +1,3 @@
+## 8 Local Access Right Groups
+
+A local access rights group can be created for a Security Server client in order to facilitate the management of service access rights for a group of X-Road subsystems that use the same services. The access rights granted for a group apply for all the members of the group. Local groups are client-based, that is, a local group can only be used to manage the service access rights of one Security Server client in one Security Server.

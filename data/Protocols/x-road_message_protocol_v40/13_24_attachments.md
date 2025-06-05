@@ -1,0 +1,5 @@
+### 2.4 Attachments
+
+In case the message has attachments, it MUST be formatted as a multipart MIME message, with the SOAP request and its attachments being separate parts of the message. The SOAP request must be the first part. The resulting MIME message MUST be structured in accordance with the specification for SOAP messages with attachments \[[SOAPATT](#Ref_SOAPATT)\] and the request SOAP part's *Content-Transfer-Encoding* MIME header value MUST be "8bit". MIME headers of each part of the message are preserved without modification in the security server. For an example request that contains attachments see [Annex F](#annex-f-example-request-with-attachment).
+
+Additionally, MTOM-encoded \[[MTOM](#Ref_MTOM)\] messages are supported in the security server – the security server accepts MIME multipart messages where the content-type of the SOAP part is "application/xop+xml".

@@ -1,0 +1,3 @@
+## 6 Management and Source Control of Automated Tests
+
+All the source code and the necessary data and configuration files (or samples where necessary) of the integration, load and unit tests will be committed to the main Git development repository of the project. The tests and test data, once these are implemented, will be included in the pull request made at the end of each relevant iteration of the project.

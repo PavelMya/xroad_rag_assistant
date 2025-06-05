@@ -1,0 +1,38 @@
+#### 2.2.1 Network Diagram
+
+The network diagram below provides an example of a basic Security Server setup. Allowing incoming connections from the Monitoring Security Server on ports 5500/tcp and 5577/tcp is necessary for the X-Road Operator to be able to monitor the ecosystem and provide statistics and support for Members.
+
+![network diagram](img/ig-ss_network_diagram.svg)
+
+The table below lists the required connections between different components.
+
+| Connection Type | Source                                                   | Target                                                   | Target Ports   | Protocol | Note                                                                                                                                                                                  |
+|-----------------|----------------------------------------------------------|----------------------------------------------------------|----------------|----------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Out             | Security Server                                          | Central Server                                           | 80, 443, 4001  | tcp      |                                                                                                                                                                                       |
+| Out             | Security Server                                          | Management Security Server                               | 5500, 5577     | tcp      |                                                                                                                                                                                       |
+| Out             | Security Server                                          | OCSP Service                                             | 80 / 443       | tcp      |                                                                                                                                                                                       |
+| Out             | Security Server                                          | Timestamping Service                                     | 80 / 443       | tcp      |                                                                                                                                                                                       |
+| Out             | Security Server                                          | Data Exchange Partner Security Server (Service Producer) | 5500, 5577     | tcp      |                                                                                                                                                                                       |
+| Out             | Security Server                                          | Producer Information System                              | 80, 443, other | tcp      | Target in the internal network                                                                                                                                                        |
+| Out             | Security Server                                          | ACME Server                                              | 80 / 443       | tcp      |                                                                                                                                                                                       |
+| Out             | Security Server                                          | Mail server                                              | 587            | tcp      |                                                                                                                                                                                       |
+| In              | Monitoring Security Server                               | Security Server                                          | 5500, 5577     | tcp      |                                                                                                                                                                                       |
+| In              | Data Exchange Partner Security Server (Service Consumer) | Security Server                                          | 5500, 5577     | tcp      |                                                                                                                                                                                       |
+| In              | ACME Server                                              | Security Server                                          | 80             | tcp      |                                                                                                                                                                                       | 
+| In              | Consumer Information System                              | Security Server                                          | 8080, 8443     | tcp      | Source in the internal network                                                                                                                                                        |
+| In              | Admin                                                    | Security Server                                          | 4000           | tcp      | Source in the internal network                                                                                                                                                        |
+| In              | Monitoring system                                        | Security Server                                          | other          | tcp      | Source in the internal network<br />The health check interface is disabled by default and the target port is defined by the Security Server administrator when the feature is enabled |
+
+The table below lists the open ports for Security Server components utilizing the _loopback_ interface. A loopback interface is a virtual network interface on a computer, facilitating self-communication for processes and applications. This enables local communication and the ports must be accessible locally.
+
+| **Component**            | **Ports** | **Protocol** | **Note**                        |
+|--------------------------|-----------|--------------|---------------------------------|
+| PostgreSQL database      | 5432      | tcp          | Default PostgreSQL port         | 
+| OP Monitoring daemon     | 2080      | tcp          |                                 | 
+| Environmental monitoring | 2552      | tcp          |                                 | 
+| Signer                   | 5559      | tcp          | Signer admin port               | 
+| Signer                   | 5560      | tcp          | Signer gRPC port                | 
+| Proxy                    | 5566      | tcp          | Proxy admin port                | 
+| Proxy                    | 5567      | tcp          | Proxy gRPC server port          | 
+| Configuration Client     | 5675      | tcp          | Configuration Client admin port | 
+| Audit Log                | 514       | udp          |                                 |

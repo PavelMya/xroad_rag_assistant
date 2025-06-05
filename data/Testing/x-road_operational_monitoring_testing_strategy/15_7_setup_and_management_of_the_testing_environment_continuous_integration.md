@@ -1,0 +1,3 @@
+## 7 Setup and Management of the Testing Environment. Continuous Integration
+
+The testing environment and continuous integration setup during development will closely mimic the required target testing environment (as described in \[[HD_4](#HD_4)\]) with some additions. The relevant configuration files and documentation will be committed to the main Git development repository for simple migration to the target testing system.

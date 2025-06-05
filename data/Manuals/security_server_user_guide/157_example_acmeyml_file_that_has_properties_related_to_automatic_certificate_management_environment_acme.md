@@ -1,0 +1,1 @@
+# Example acme.yml file that has properties related to Automatic Certificate Management Environment (ACME)

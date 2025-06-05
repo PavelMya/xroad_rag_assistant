@@ -1,0 +1,3 @@
+### 2.15 IDENTIFIERS
+
+Identifier that can be used to identify various objects on X-Road. An identifier record is only created together with records of other entities. There is no check of duplicates when new identifier record is added. The record is deleted when any record associated with the identifier is deleted. For example, when an entity of global_group_members is deleted, respective identifier is deleted as well. The record is never modified.

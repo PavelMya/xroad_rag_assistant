@@ -1,0 +1,6 @@
+### 1.3 Creating, Backing Up and Restoring the Database
+
+This database is integrated into X-Road security server application. The database management functions are embedded into the application user interface.
+The database, the database user and the data model is created by the application's installer. The database updates are packaged as application updates and are applied when the application is upgraded. From the technical point of view, the database structure is created and updated using [Liquibase](http://www.liquibase.org/) tool. The migration scripts can be found both in application source and in file system of the installed application.
+Database backup functionality is built into the application. The backup operation can be invoked from the web-based user interface or from the command line. The backup contains dump of all the database structure and contents. When restoring the application, first the software is installed and then the configuration database is restored together with all the other necessary files. This produces a working security server. 
+Note: backing up of security server does not include message log that is managed using different tools.

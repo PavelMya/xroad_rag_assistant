@@ -1,0 +1,3 @@
+### 2.10 IDENTIFIER
+
+Identifier that can be used to identify various objects on X-Road. An identifier record is only created together with records of other entities and only one record of each identifier is ever created. For example, if a security server client record is created and its identifier is not found among identifier records, new one is created. The record is never modified or deleted. An exception, when an entity of client is deleted, respective identifier is deleted as well.

@@ -6,10 +6,6 @@ __pycache__/
 *.pyc
 
 # Индексы Langchain
-*.faiss
-*.pkl
-faiss_index/
-data/
 datatatataat/
 
 # Персональные данные

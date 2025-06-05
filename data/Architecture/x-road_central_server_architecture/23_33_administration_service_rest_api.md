@@ -1,0 +1,3 @@
+### 3.3 Administration Service REST API
+
+Administration Service provides a REST API that is documented using OpenAPI 3 definition: \[[ADMIN-SERVICE-API](#Ref_ADMIN-SERVICE-API)\]. For more information on OpenAPI 3, see \[[OPENAPI](#Ref_OPENAPI)\]. Administration Service REST API is internally used by User Interface Frontend and Management Services components and it may be used by external components.

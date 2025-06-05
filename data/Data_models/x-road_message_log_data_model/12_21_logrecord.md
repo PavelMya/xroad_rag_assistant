@@ -1,0 +1,3 @@
+### 2.1 LOGRECORD
+
+Log record can either be a message record or a timestamp record. A message record is created when the system processes an X-Road message. A timestamp record is created when the system timestamps the message records created since the last timestamping. A message record is modified by adding a reference to a timestamp record after it has been timestamped. All the records are modified by changing the archived flag after they have been archived. All the records are eventually deleted after they have been timestamped and archived.

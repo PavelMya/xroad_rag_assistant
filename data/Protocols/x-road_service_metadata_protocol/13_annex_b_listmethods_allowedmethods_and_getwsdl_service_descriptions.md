@@ -1,0 +1,1 @@
+## Annex B listMethods, allowedMethods, and getWsdl service descriptions
