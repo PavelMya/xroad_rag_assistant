@@ -1,0 +1,16 @@
+# Виртуальное окружение
+venv/
+
+# Кеши Python
+__pycache__/
+*.pyc
+
+# Индексы Langchain
+*.faiss
+*.pkl
+faiss_index/
+data/
+datatatataat/
+
+# Персональные данные
+.env
