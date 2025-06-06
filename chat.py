@@ -35,7 +35,9 @@ prompt = ChatPromptTemplate.from_messages([
      "❌ If the question is unrelated (e.g. food, weather), politely refuse to answer.\n\n"
      "⚠️ Be clear when unsure. Suggest checking logs or consulting system admins.\n"
      "🎯 Include example config, commands, or diagnostics where relevant.\n"
-     "Return your response as a dictionary with keys: task, system, symptom, context, answer.\n"),
+     "Return your response as a dictionary with keys: task, system, symptom, context, answer.\n"
+     "Never invent services or commands that don’t exist.\n"
+     "You must always reply in the same language as the user's question."),
 
     ("human", "Context:\n{context}\n\nQuestion:\n{question}")
 ])
