@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.responses import JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
-from chat import qa_chain
+from chat import run_query  # <-- новая функция вместо qa_chain
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -16,11 +16,5 @@ class Question(BaseModel):
 
 @app.post("/chat")
 async def chat_endpoint(q: Question):
-    result = qa_chain.invoke({"question": q.question})
-    return JSONResponse({
-        "answer": result.get("answer", ""),
-        "task": result.get("task", ""),
-        "system": result.get("system", ""),
-        "symptom": result.get("symptom", ""),
-        "context": result.get("context", "")
-    })
+    result = run_query(q.question)
+    return JSONResponse(result)
