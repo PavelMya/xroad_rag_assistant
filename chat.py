@@ -65,7 +65,7 @@ retriever = vectorstore.as_retriever()
 retriever_with_memory = create_history_aware_retriever(
     llm=llm,
     retriever=retriever,
-    memory=memory
+    prompt=acurai_prompt
 )
 
 # Chain для генерации ответа
@@ -75,7 +75,7 @@ document_chain = create_stuff_documents_chain(
 )
 qa_chain = create_retrieval_chain(
     retriever=retriever_with_memory,
-    combine_docs_chain=document_chain
+    combine_docs_chain=llm_chain  # это из load_qa_chain(...)
 )
 
 # Функция запроса
