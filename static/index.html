@@ -29,7 +29,7 @@
       color: #333;
     }
     #chat-box {
-      max-height: 600px;
+      max-height: 500px;
       overflow-y: auto;
       margin-bottom: 20px;
       padding: 10px;
@@ -49,7 +49,7 @@
       border-left: 4px solid #3399ff;
       border-radius: 5px;
     }
-    .acurai-fields, .sources-block, .confidence-block {
+    .acurai-fields {
       font-size: 13px;
       margin-bottom: 8px;
       padding: 10px;
@@ -57,7 +57,7 @@
       border-radius: 6px;
       border-left: 4px solid #87cefa;
     }
-    .acurai-fields p, .sources-block p, .confidence-block p {
+    .acurai-fields p {
       margin: 4px 0;
     }
     #chat-form {
@@ -117,40 +117,21 @@
 
       const data = await res.json();
 
-      // 👇 Визуальный вывод AcuRAI-инструкции
       let acurai = "";
-      if (data.task || data.system || data.symptom || data.context) {
+      if (data.task || data.system || data.symptom || data.context || data.confidence) {
         acurai += `<div class="acurai-fields">`;
-        if (data.task) acurai += `<p><strong>🎯 Task:</strong> ${data.task}</p>`;
-        if (data.system) acurai += `<p><strong>🧩 System:</strong> ${data.system}</p>`;
-        if (data.symptom) acurai += `<p><strong>🚨 Symptom:</strong> ${data.symptom}</p>`;
-        if (data.context) acurai += `<p><strong>📄 Context:</strong> ${data.context}</p>`;
+        if (data.task) acurai += `<p><strong>Task:</strong> ${data.task}</p>`;
+        if (data.system) acurai += `<p><strong>System:</strong> ${data.system}</p>`;
+        if (data.symptom) acurai += `<p><strong>Symptom:</strong> ${data.symptom}</p>`;
+        if (data.context) acurai += `<p><strong>Context:</strong> ${data.context}</p>`;
+        if (data.confidence) acurai += `<p><strong>Confidence:</strong> ${data.confidence}</p>`;
         acurai += `</div>`;
       }
 
-      // 👇 Вывод оценки уверенности
-      let confidence = "";
-      if (data.confidence) {
-        confidence += `<div class="confidence-block"><p><strong>🔍 Confidence:</strong> ${data.confidence}</p></div>`;
-      }
-
-      // 👇 Вывод источников
-      let sources = "";
-      if (data.sources && data.sources.length > 0) {
-        sources += `<div class="sources-block"><p><strong>📚 Sources:</strong></p><ul>`;
-        data.sources.forEach(src => {
-          sources += `<li>${src}</li>`;
-        });
-        sources += `</ul></div>`;
-      }
-
-      // 👇 Собираем ответ
       chatBox.innerHTML += `
         <div class="answer">
           ${acurai}
-          ${confidence}
           💬 ${data.answer}
-          ${sources}
         </div>
       `;
       chatBox.scrollTop = chatBox.scrollHeight;
