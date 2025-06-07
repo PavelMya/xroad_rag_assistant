@@ -3,10 +3,7 @@ from dotenv import load_dotenv
 
 from langchain.chains import ConversationalRetrievalChain
 from langchain_community.vectorstores import FAISS
-from langchain_community.document_loaders import TextLoader
-from langchain_openai import ChatOpenAI
-from langchain_openai import OpenAIEmbeddings
-from langchain.memory import ConversationBufferMemory
+from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from langchain.prompts import PromptTemplate
 
 # Загрузка переменных окружения
@@ -18,11 +15,6 @@ llm = ChatOpenAI(
     model="gpt-4o",
     temperature=0.2,
     api_key=OPENAI_API_KEY
-)
-
-# Память чата
-memory = ConversationBufferMemory(
-    memory_key="chat_history", return_messages=True
 )
 
 # Acurai prompt template
@@ -46,13 +38,13 @@ vectorstore = FAISS.load_local(
     allow_dangerous_deserialization=True
 )
 
+# Создание цепочки без памяти (или можно позже заменить)
 qa_chain = ConversationalRetrievalChain.from_llm(
     llm=llm,
     retriever=vectorstore.as_retriever(search_kwargs={"k": 5}),
-    memory=memory,
     return_source_documents=True,
     combine_docs_chain_kwargs={"prompt": acurai_prompt},
-    output_key="answer",  # 👈 ОБЯЗАТЕЛЬНО!
+    output_key="answer",  # Указано явно
     verbose=True
 )
 
@@ -64,11 +56,10 @@ def enhanced_query(query: str) -> dict:
         "answer": result["answer"],
         "source_documents": [
             doc.metadata.get("source", "") for doc in result["source_documents"]
-        ],
-        "chat_history": memory.chat_memory.messages
+        ]
     }
 
-# Пример использования
+# Тест в консоли
 if __name__ == "__main__":
     while True:
         user_input = input("Вы: ")
