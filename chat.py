@@ -26,6 +26,8 @@ memory = ConversationBufferMemory(
 )
 
 # Acurai prompt template
+retriever = vectorstore.as_retriever()
+
 
 acurai_prompt = PromptTemplate(
     input_variables=["question", "context"],  # ВАЖНО: context включён!
