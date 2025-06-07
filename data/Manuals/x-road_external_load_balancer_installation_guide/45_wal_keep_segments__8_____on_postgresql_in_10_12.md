@@ -1,1 +1,0 @@
-# wal_keep_segments = 8    # on PostgreSQL in 10, 12

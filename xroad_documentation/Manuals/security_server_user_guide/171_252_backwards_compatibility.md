@@ -1,0 +1,4 @@
+### 25.2 Backwards Compatibility
+
+EC based keys are supported starting from X-Road version 7.6.0 (=> 7.6.0). If an X-Road instance contains Security Servers prior to version 7.6.0 ( 7.6.0).
+If a Security Server prior to version 7.6.0 ( 7.6.0), which uses EC based authentication certificate, then "TLS handshake failed" error may occur. To fix this without upgrading the older Security Server, update the Security Server's `xroad-tls-ciphers` property to include EC compatible TLS cipher, e.g.: `TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384`, please see [UG-SYSPAR](../Manuals/ug-syspar_x-road_v6_system_parameters.md) for details.

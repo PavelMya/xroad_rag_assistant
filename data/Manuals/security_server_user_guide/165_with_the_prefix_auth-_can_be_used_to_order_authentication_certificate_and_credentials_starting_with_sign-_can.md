@@ -1,1 +1,0 @@
-# with the prefix "auth-" can be used to order authentication certificate and credentials starting with "sign-" can

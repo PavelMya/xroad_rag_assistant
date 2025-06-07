@@ -1,1 +1,0 @@
-## 5. Configuring data replication with rsync over SSH

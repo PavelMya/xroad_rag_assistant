@@ -1,5 +1,4 @@
 import os
-import json
 from dotenv import load_dotenv
 from langchain.prompts import ChatPromptTemplate
 from langchain.chains import ConversationalRetrievalChain
@@ -11,38 +10,33 @@ from langchain.memory import ConversationBufferMemory
 load_dotenv()
 openai_api_key = os.getenv("OPENAI_API_KEY")
 
-# Векторная база
+# Загружаем векторную базу
 embeddings = OpenAIEmbeddings(api_key=openai_api_key)
 db = FAISS.load_local("faiss_index", embeddings, allow_dangerous_deserialization=True)
 
 # Модель
 llm = ChatOpenAI(temperature=0, api_key=openai_api_key)
 
-# AcuRAI-инструкции
+# Инструкция AcuRAI + форматированная структура
 prompt = ChatPromptTemplate.from_messages([
     ("system",
      "You are an expert assistant for the X-Road system, Linux system administration, and API development.\n"
-     "Use the provided documentation context ({context}) as your most trusted source of truth.\n\n"
-     "You follow the AcuRAI instruction format internally to understand every user question.\n"
-     "Before answering, you ALWAYS interpret the user input by breaking it into these fields:\n"
-     "- task: what the user is trying to achieve or fix\n"
-     "- system: what system or component is involved\n"
-     "- symptom: what is going wrong or being observed\n"
-     "- context: any extra conditions or constraints\n\n"
-     "✅ If the issue is X-Road related, use the documentation and your expertise.\n"
-     "📌 If it's a general Linux/system issue, begin with:\n"
-     "'📌 This issue appears to be outside the scope of X-Road documentation.'\n"
-     "Then cautiously suggest possible causes.\n"
-     "❌ If the question is unrelated (e.g. food, weather), politely refuse.\n\n"
-     "⚠️ Be clear when unsure. Suggest checking logs or consulting sysadmins.\n"
-     "🎯 Include example config, commands, or diagnostics where relevant.\n"
-     "Return your response as a dictionary with keys: task, system, symptom, context, answer, confidence.\n"
-     "You must always reply in the same language as the user's question."),
+     "Use the documentation context ({context}) as your primary source of truth.\n\n"
+     "Always parse the user request into:\n"
+     "- task: what the user wants to do\n"
+     "- system: what component is involved\n"
+     "- symptom: what is happening\n"
+     "- context: any extra info\n\n"
+     "Return your answer as a dictionary with:\n"
+     "task, system, symptom, context, answer, confidence\n\n"
+     "✅ If it’s about Linux/system: write 📌 This issue appears to be outside the scope of X-Road.\n"
+     "❌ If irrelevant (e.g. food): politely refuse.\n"
+     "⚠️ Say you're not sure if needed. Do not invent anything.\n"
+     "🧠 Confidence must be High / Medium / Low."),
 
     ("human", "Context:\n{context}\n\nQuestion:\n{question}")
 ])
 
-# Память и цепочка
 memory = ConversationBufferMemory(
     memory_key="chat_history",
     return_messages=True,
@@ -58,35 +52,3 @@ qa_chain = ConversationalRetrievalChain.from_llm(
     output_key="answer",
     combine_docs_chain_kwargs={"prompt": prompt}
 )
-
-# Функция для вызова и извлечения нужных полей
-
-def run_query(question: str):
-    result = qa_chain.invoke({"question": question})
-    answer_text = result.get("answer", "")
-
-    try:
-        # если ответ уже в виде dict — оставим
-        if isinstance(answer_text, dict):
-            parsed = answer_text
-        else:
-            parsed = json.loads(answer_text)
-    except Exception:
-        parsed = {
-            "task": "",
-            "system": "",
-            "symptom": "",
-            "context": "",
-            "answer": answer_text,
-            "confidence": "Low"
-        }
-
-    # добавим confidence и ссылки (если есть)
-    parsed["confidence"] = parsed.get("confidence", "Medium")
-    parsed["sources"] = [
-        {"title": doc.metadata.get("title", "Unknown"), "url": doc.metadata.get("source", "#")}
-        for doc in result.get("source_documents", [])
-        if doc.metadata.get("source")
-    ]
-
-    return parsed

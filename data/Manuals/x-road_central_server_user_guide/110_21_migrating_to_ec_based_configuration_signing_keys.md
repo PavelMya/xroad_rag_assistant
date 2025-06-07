@@ -1,1 +1,0 @@
-## 21. Migrating to EC Based Configuration Signing Keys

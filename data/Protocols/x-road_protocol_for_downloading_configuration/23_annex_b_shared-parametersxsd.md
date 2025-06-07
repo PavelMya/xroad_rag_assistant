@@ -1,1 +1,0 @@
-## Annex B. shared-parameters.xsd

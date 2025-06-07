@@ -1,1 +1,0 @@
-## 15. Additional configuration options

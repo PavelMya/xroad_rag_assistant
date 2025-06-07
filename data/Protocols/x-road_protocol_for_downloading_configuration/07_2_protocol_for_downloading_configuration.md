@@ -1,1 +1,0 @@
-## 2 Protocol for Downloading Configuration

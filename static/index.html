@@ -2,58 +2,91 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>RAG Chat</title>
+  <title>GPT Chat with X-Road Docs</title>
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
       background-color: #f5f7fa;
-      margin: 0; padding: 0;
-      display: flex; justify-content: center; align-items: flex-start;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
       min-height: 100vh;
     }
     .container {
       background: white;
-      width: 90%; max-width: 700px;
-      margin-top: 50px; padding: 30px;
+      width: 90%;
+      max-width: 700px;
+      margin-top: 40px;
+      padding: 30px;
       border-radius: 12px;
       box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
     }
     h1 {
-      text-align: center; color: #333;
-      margin: 10px 0 20px;
+      text-align: center;
+      color: #333;
     }
     #chat-box {
-      max-height: 500px; overflow-y: auto;
-      padding: 10px; margin-bottom: 20px;
+      max-height: 500px;
+      overflow-y: auto;
+      margin-bottom: 20px;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
       background-color: #fafafa;
-      border: 1px solid #ddd; border-radius: 8px;
     }
-    .question { font-weight: bold; color: #0066cc; margin: 10px 0 4px; }
-    .answer { background-color: #eef6ff; border-left: 4px solid #3399ff; border-radius: 5px; padding: 10px; margin-bottom: 20px; }
-    .acurai-fields, .sources, .confidence {
-      font-size: 13px; background: #f0f8ff; border-left: 4px solid #87cefa;
-      border-radius: 6px; padding: 10px; margin-bottom: 8px;
+    .question {
+      font-weight: bold;
+      margin: 10px 0 4px;
+      color: #0066cc;
     }
-    .acurai-fields p, .sources p, .confidence p { margin: 4px 0; }
-    #chat-form { display: flex; gap: 10px; }
+    .answer {
+      margin-bottom: 20px;
+      padding: 10px;
+      background-color: #eef6ff;
+      border-left: 4px solid #3399ff;
+      border-radius: 5px;
+    }
+    .acurai-fields {
+      font-size: 13px;
+      margin-bottom: 8px;
+      padding: 10px;
+      background-color: #f0f8ff;
+      border-radius: 6px;
+      border-left: 4px solid #87cefa;
+    }
+    .acurai-fields p {
+      margin: 4px 0;
+    }
+    .sources {
+      font-size: 12px;
+      color: gray;
+    }
+    #chat-form {
+      display: flex;
+      gap: 10px;
+    }
     #question {
-      flex-grow: 1; padding: 10px;
+      flex-grow: 1;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
       font-size: 14px;
-      border: 1px solid #ccc; border-radius: 8px;
     }
     button {
       padding: 10px 20px;
       background-color: #3399ff;
-      color: white; border: none;
-      border-radius: 8px; cursor: pointer;
-      transition: background 0.2s ease;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
     }
-    button:hover { background-color: #0077dd; }
   </style>
 </head>
 <body>
   <div class="container">
-    <img src="/static/logo.png" alt="Logo" style="max-height: 60px; display: block; margin: 0 auto 10px;">
+    <img src="/static/logo.png" alt="Logo" style="max-height: 60px; display: block; margin: 0 auto 10px;" />
     <h1>Chat with X-Road Docs</h1>
     <div id="chat-box"></div>
     <form id="chat-form">
@@ -65,65 +98,40 @@
   <script>
     const form = document.getElementById("chat-form");
     const chatBox = document.getElementById("chat-box");
-    const questionInput = document.getElementById("question");
-
-    // Восстановить историю из localStorage
-    if (localStorage.chatHistory) {
-      chatBox.innerHTML = localStorage.chatHistory;
-    }
 
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
-      const question = questionInput.value.trim();
+      const input = document.getElementById("question");
+      const question = input.value.trim();
       if (!question) return;
-
       chatBox.innerHTML += `<p class="question">❓ ${question}</p>`;
-      questionInput.value = "";
+      input.value = "";
 
       const res = await fetch("/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ question }),
       });
-
       const data = await res.json();
 
-      let fields = "";
-      if (data.task || data.system || data.symptom || data.context) {
-        fields += `<div class="acurai-fields">`;
-        if (data.task) fields += `<p><strong>Task:</strong> ${data.task}</p>`;
-        if (data.system) fields += `<p><strong>System:</strong> ${data.system}</p>`;
-        if (data.symptom) fields += `<p><strong>Symptom:</strong> ${data.symptom}</p>`;
-        if (data.context) fields += `<p><strong>Context:</strong> ${data.context}</p>`;
-        fields += `</div>`;
-      }
-
-      let confidence = "";
-      if (data.confidence) {
-        confidence += `<div class="confidence"><p><strong>Confidence:</strong> ${data.confidence}</p></div>`;
+      let acurai = "";
+      if (data.task || data.system || data.symptom || data.context || data.confidence) {
+        acurai += `<div class="acurai-fields">`;
+        if (data.task) acurai += `<p>🎯 <strong>Task:</strong> ${data.task}</p>`;
+        if (data.system) acurai += `<p>🧩 <strong>System:</strong> ${data.system}</p>`;
+        if (data.symptom) acurai += `<p>🚨 <strong>Symptom:</strong> ${data.symptom}</p>`;
+        if (data.context) acurai += `<p>📄 <strong>Context:</strong> ${data.context}</p>`;
+        if (data.confidence) acurai += `<p>🤖 <strong>Confidence:</strong> ${data.confidence}</p>`;
+        acurai += `</div>`;
       }
 
       let sources = "";
-      if (data.sources && data.sources.length) {
-        sources += `<div class="sources"><p><strong>Sources:</strong></p><ul>`;
-        data.sources.forEach(src => {
-          sources += `<li>${src.file || src.title}</li>`;
-        });
-        sources += `</ul></div>`;
+      if (data.sources && data.sources.length > 0) {
+        sources = `<div class="sources"><strong>Sources:</strong><br/>${data.sources.map(s => `📄 ${s}`).join("<br/>")}</div>`;
       }
 
-      chatBox.innerHTML += `
-        <div class="answer">
-          ${fields}
-          ${confidence}
-          💬 ${data.answer}
-          ${sources}
-        </div>
-      `;
+      chatBox.innerHTML += `<div class="answer">${acurai}💬 ${data.answer}${sources}</div>`;
       chatBox.scrollTop = chatBox.scrollHeight;
-
-      // Сохраняем историю
-      localStorage.chatHistory = chatBox.innerHTML;
     });
   </script>
 </body>

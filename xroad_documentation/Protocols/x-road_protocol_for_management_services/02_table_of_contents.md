@@ -1,0 +1,35 @@
+## Table of Contents 
+
+- [License](#license)
+- [1 Introduction](#1-introduction)
+  - [1.1 Terms and abbreviations](#11-terms-and-abbreviations)
+  - [1.2 References](#12-references)
+- [2 Format of the Messages](#2-format-of-the-messages)
+  - [2.1 *clientReg* - Security Server Client Registration](#21-clientreg---security-server-client-registration)
+  - [2.2 *clientDeletion* - Security Server Client Deletion](#22-clientdeletion---security-server-client-deletion)
+  - [2.3 *authCertReg* - Security Server Authentication Certificate Registration](#23-authcertreg---security-server-authentication-certificate-registration)
+  - [2.4 *authCertDeletion* - Security Server Authentication Certificate Deletion](#24-authcertdeletion---security-server-authentication-certificate-deletion)
+  - [2.5 *ownerChange* - Security Server Owner Change](#25-ownerchange---security-server-owner-change)
+  - [2.6 *addressChange* - Security Server address change](#26-addresschange---security-server-address-change)
+  - [2.7 *clientDisable* - Disable Security Server Client Subsystem Temporarily](#27-clientdisable---disable-security-server-client-subsystem-temporarily)
+  - [2.8 *clientEnable* - Enable Security Server Client Subsystem](#28-clientenable---enable-security-server-client-subsystem)
+  - [2.9 *clientRename* - Rename Security Server Client Subsystem](#29-clientrename---rename-security-server-client-subsystem)
+  - [2.10 *maintenanceModeEnable* - Enable Maintenance Mode for the Security Server](#210-maintenancemodeenable---enable-maintenance-mode-for-the-security-server)
+  - [2.11 *maintenanceModeDisable* - Disable Maintenance Mode for the Security Server](#211-maintenancemodedisable---disable-maintenance-mode-for-the-security-server)
+- [Annex A. Example messages](#annex-a-example-messages)
+  - [A.1 clientReg](#a1-clientreg)
+  - [A.2 clientDeletion](#a2-clientdeletion)
+  - [A.3 authCertReg](#a3-authcertreg)
+  - [A.4 authCertDeletion](#a4-authcertdeletion)
+  - [A.5 ownerChange](#a5-ownerchange)
+  - [A.6 addressChange](#a6-addresschange)
+  - [A.7 clientDisable](#a7-clientdisable)
+  - [A.8 clientEnable](#a8-clientenable)
+  - [A.9 clientRename](#a9-clientrename)
+  - [A.10 maintenanceModeEnable](#a10-maintenancemodeenable)
+  - [A.11 maintenanceModeDisable](#a11-maintenancemodedisable)
+- [Annex B WSDL File for Management Services](#annex-b-wsdl-file-for-management-services)
+
+## License
+
+This work is licensed under the Creative Commons Attribution-ShareAlike 3.0 Unported License. To view a copy of this license, visit http://creativecommons.org/licenses/by-sa/3.0/.

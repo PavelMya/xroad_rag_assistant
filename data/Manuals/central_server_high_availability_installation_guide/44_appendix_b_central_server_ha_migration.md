@@ -1,1 +1,0 @@
-## Appendix B. Central Server HA Migration
