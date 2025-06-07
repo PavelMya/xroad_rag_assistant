@@ -20,7 +20,9 @@ llm = ChatOpenAI(
 
 # Шаблон AcuRAI без переменной {context}
 
-acurai_prompt = PromptTemplate.from_template("""
+acurai_prompt = PromptTemplate(
+    input_variables=["question"],
+    template="""
 You are a senior assistant for system administrators using X-Road.
 
 Your job is to deeply analyze the user's technical problem and give a complete, precise and practical answer.
@@ -50,7 +52,8 @@ Style:
 - Avoid vague phrases — be concrete.
 
 Only show the ANSWER section in your response.
-""")
+"""
+)
 
 # Память чата
 memory = ConversationBufferMemory(
