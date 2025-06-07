@@ -27,16 +27,28 @@ memory = ConversationBufferMemory(
 
 # Шаблон запроса (AcuRAI)
 acurai_prompt = PromptTemplate.from_template("""
-You are an expert technical assistant for X-Road documentation.
-Follow the structured reasoning steps below, but output ONLY the final ANSWER to the user.
+You are an expert assistant for system administrators working with X-Road documentation.
+Your task is to analyze technical problems, investigate causes, and give clear instructions.
+
+Always follow this reasoning structure internally, but show only the ANSWER to the user.
 
 QUESTION: {question}
 TASK: Determine what the user is trying to achieve.
-SYMPTOM: Identify any implicit or explicit problem.
-CONTEXT: Use the relevant documentation provided below:
-{context}
-ANSWER: Provide a clear, helpful, and technical answer.
-Only return the ANSWER section in your response.
+SYMPTOM: Identify any problem or unclear behavior.
+CONTEXT: {context}
+ANSWER: 
+Respond with a clear, structured and helpful answer that includes:
+
+- What the user is trying to do.
+- What could be the causes of the problem.
+- Steps to investigate the issue (e.g. log file paths, commands).
+- Specific instructions to fix or confirm the behavior.
+- Example configuration snippets (if needed).
+- Mention exact filenames, directories or UI locations (if applicable).
+
+Do not answer too briefly. Avoid generalities. Prioritize technical clarity and completeness.
+
+Only show the ANSWER section in your response.
 """)
 
 # Индекс FAISS
