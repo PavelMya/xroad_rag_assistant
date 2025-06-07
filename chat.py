@@ -1,6 +1,6 @@
 import os
 from dotenv import load_dotenv
-
+from langchain.chains.question_answering import load_qa_chain
 from langchain.chains import ConversationalRetrievalChain
 from langchain_community.vectorstores import FAISS
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
@@ -33,13 +33,14 @@ acurai_prompt = PromptTemplate(
 You are an expert assistant for system administrators working with X-Road documentation.
 Your task is to analyze technical problems, investigate causes, and give clear instructions.
 
-Always follow this reasoning structure internally, but show only the ANSWER to the user.
+Always follow this reasoning structure internally, but show only the final ANSWER to the user.
 
 QUESTION: {question}
 TASK: Determine what the user is trying to achieve.
 SYMPTOM: Identify any problem or unclear behavior.
 CONTEXT: Use relevant documentation and prior context to understand what may be wrong.
-ANSWER: 
+
+ANSWER:
 Respond with a clear, structured and helpful answer that includes:
 
 - What the user is trying to do.
@@ -51,7 +52,7 @@ Respond with a clear, structured and helpful answer that includes:
 
 Do not answer too briefly. Avoid generalities. Prioritize technical clarity and completeness.
 
-Only show the ANSWER section in your response.
+Only output the ANSWER section. Do not show QUESTION, TASK, SYMPTOM or CONTEXT.
 """
 )
 
@@ -62,15 +63,19 @@ vectorstore = FAISS.load_local(
     allow_dangerous_deserialization=True
 )
 
+llm_chain = load_qa_chain(
+    llm=llm,
+    chain_type="stuff",
+    prompt=acurai_prompt
+)
+
 # Цепочка с памятью и указанием output_key
 qa_chain = ConversationalRetrievalChain.from_llm(
     llm=llm,
-    retriever=vectorstore.as_retriever(search_kwargs={"k": 5}),
+    retriever=vectorstore.as_retriever(),
     memory=memory,
-    return_source_documents=True,
-    combine_docs_chain_kwargs={"prompt": acurai_prompt},
-    output_key="answer",
-    verbose=True
+    combine_docs_chain=llm_chain,  # 🔥 Без этого будет ошибка
+    return_source_documents=True
 )
 
 # Функция запроса
