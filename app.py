@@ -1,20 +1,24 @@
+
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
-from chat import enhanced_query  # импорт функции из chat.py
+from chat import enhanced_query
+import os
 
 app = FastAPI()
 
-# Разрешим CORS (если frontend на другом домене)
+# CORS (если нужен)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # можешь указать конкретный frontend-домен
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Модель запроса от клиента
+# Модель запроса
 class QueryRequest(BaseModel):
     question: str
 
@@ -23,7 +27,15 @@ class QueryResponse(BaseModel):
     answer: str
     sources: list[str]
 
-# Главный endpoint
+# Подключаем папку с frontend (там должен быть index.html)
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
+# Отдаём index.html при открытии корня сайта
+@app.get("/")
+async def serve_index():
+    return FileResponse("static/index.html")
+
+# API endpoint для общения с GPT
 @app.post("/chat", response_model=QueryResponse)
 async def chat_endpoint(request: QueryRequest):
     response = enhanced_query(request.question)
@@ -32,11 +44,7 @@ async def chat_endpoint(request: QueryRequest):
         "sources": response["source_documents"],
     }
 
-# Для локального запуска
+# Локальный запуск
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("app:app", host="0.0.0.0", port=8000, reload=True)
-
-@app.get("/")
-def root():
-    return {"message": "ChatGPT assistant is running. Use POST /chat to interact."}
