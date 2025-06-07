@@ -1,22 +1,31 @@
 import os
 from dotenv import load_dotenv
-from langchain_community.vectorstores import FAISS
-from langchain_community.embeddings import OpenAIEmbeddings
-from langchain_openai import ChatOpenAI
-from langchain.prompts import PromptTemplate
+
 from langchain.chains import ConversationalRetrievalChain
+from langchain_community.vectorstores import FAISS
+from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from langchain.memory import ConversationBufferMemory
+from langchain.prompts import PromptTemplate
 
+# Загрузка переменных окружения
 load_dotenv()
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
-# 💬 Чат-модель OpenAI
-llm = ChatOpenAI(model='gpt-4o', temperature=0)
+# Настройка модели
+llm = ChatOpenAI(
+    model="gpt-4o",
+    temperature=0.2,
+    api_key=OPENAI_API_KEY
+)
 
-# 📚 Подгрузка векторной базы
-vectorstore = FAISS.load_local("faiss_index", OpenAIEmbeddings(), allow_dangerous_deserialization=True)
-retriever = vectorstore.as_retriever()
+# Память с указанием output_key
+memory = ConversationBufferMemory(
+    memory_key="chat_history",
+    return_messages=True,
+    output_key="answer"  # 🧠 чтобы память не ломалась
+)
 
-# ✅ Улучшенный AcuRAI prompt
+# Шаблон запроса (AcuRAI)
 acurai_prompt = PromptTemplate.from_template("""
 You are a senior assistant for system administrators using X-Road.
 
@@ -50,25 +59,43 @@ Style:
 Only show the ANSWER section in your response.
 """)
 
-# 🧠 Память для чата
-memory = ConversationBufferMemory(return_messages=True, memory_key="chat_history")
-
-# 🔗 Создание цепочки QA
-qa_chain = ConversationalRetrievalChain.from_llm(
-    llm=llm,
-    retriever=retriever,
-    memory=memory,
-    combine_docs_chain_kwargs={
-        "prompt": acurai_prompt
-    },
-    return_source_documents=True,
-    verbose=True,
-    output_key="answer"
+# Индекс FAISS
+vectorstore = FAISS.load_local(
+    folder_path="faiss_index",
+    embeddings=OpenAIEmbeddings(api_key=OPENAI_API_KEY),
+    allow_dangerous_deserialization=True
 )
 
+# Цепочка с памятью
+qa_chain = ConversationalRetrievalChain.from_llm(
+    llm=llm,
+    retriever=vectorstore.as_retriever(search_kwargs={"k": 5}),
+    memory=memory,
+    return_source_documents=True,
+    combine_docs_chain_kwargs={"prompt": acurai_prompt},
+    output_key="answer",
+    verbose=True
+)
+
+# Функция обработки запроса
 def enhanced_query(query: str) -> dict:
     result = qa_chain.invoke({
         "question": query,
         "chat_history": memory.chat_memory.messages
     })
-    return result
+    return {
+        "answer": result["answer"],
+        "source_documents": [
+            doc.metadata.get("source", "") for doc in result["source_documents"]
+        ],
+        "chat_history": memory.chat_memory.messages
+    }
+
+# Локальный тест
+if __name__ == "__main__":
+    while True:
+        user_input = input("Вы: ")
+        if user_input.lower() in ("exit", "quit", "выход"):
+            break
+        response = enhanced_query(user_input)
+        print("GPT:", response["answer"])
