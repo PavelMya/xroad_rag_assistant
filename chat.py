@@ -47,6 +47,11 @@ Always include:
 - 📂 Exact file locations and required permissions.
 - 📘 Mention source documentation files.
 
+Additionally, always check:
+- 🔁 Is a service restart required after configuration changes?
+- 🧪 Can the issue be verified or tested via CLI or UI?
+- ⚠️ Are there tricky or non-obvious config issues users often miss?
+
 Style:
 - Use markdown formatting (headers, code blocks, bullet points).
 - Prefer short, structured blocks over long paragraphs.
