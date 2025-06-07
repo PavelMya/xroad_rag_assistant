@@ -51,12 +51,16 @@ qa_chain = ConversationalRetrievalChain.from_llm(
 # Функция чата
 def enhanced_query(query: str) -> dict:
     """Основной метод запроса к модели."""
-    result = qa_chain.invoke({"question": query})
+    result = qa_chain.invoke({
+        "question": query,
+        "chat_history": memory.chat_memory.messages  # 🔥 ОБЯЗАТЕЛЬНО!
+    })
     return {
         "answer": result["answer"],
         "source_documents": [
             doc.metadata.get("source", "") for doc in result["source_documents"]
-        ]
+        ],
+        "chat_history": memory.chat_memory.messages
     }
 
 # Тест в консоли
