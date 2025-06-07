@@ -1,98 +1,77 @@
 import os
 from dotenv import load_dotenv
 
-from langchain.prompts import PromptTemplate
+from langchain.chains import ConversationalRetrievalChain
 from langchain_community.vectorstores import FAISS
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from langchain.memory import ConversationBufferMemory
+from langchain.prompts import PromptTemplate
 
-from langchain.chains.combine_documents import create_stuff_documents_chain
-from langchain.chains.history_aware_retriever import create_history_aware_retriever
-from langchain.chains.retrieval_qa import create_retrieval_chain
-
-# 1. Загрузка переменных окружения
+# Загрузка переменных окружения
 load_dotenv()
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
-# 2. Создание LLM
+# Настройка модели
 llm = ChatOpenAI(
     model="gpt-4o",
     temperature=0.2,
     api_key=OPENAI_API_KEY
 )
 
-# 3. Загрузка векторной БД
+# Память с указанием output_key
+memory = ConversationBufferMemory(
+    memory_key="chat_history",
+    return_messages=True,
+    output_key="answer"  # 🧠 чтобы память не ломалась
+)
+
+# Шаблон запроса (AcuRAI)
+acurai_prompt = PromptTemplate.from_template("""
+You are an expert technical assistant for X-Road documentation.
+Follow the structured reasoning steps below, but output ONLY the final ANSWER to the user.
+
+QUESTION: {question}
+TASK: Determine what the user is trying to achieve.
+SYMPTOM: Identify any implicit or explicit problem.
+CONTEXT: Use the relevant documentation provided below:
+{context}
+ANSWER: Provide a clear, helpful, and technical answer.
+Only return the ANSWER section in your response.
+""")
+
+# Индекс FAISS
 vectorstore = FAISS.load_local(
     folder_path="faiss_index",
     embeddings=OpenAIEmbeddings(api_key=OPENAI_API_KEY),
     allow_dangerous_deserialization=True
 )
-retriever = vectorstore.as_retriever()
 
-# 4. Промпт (в формате LangChain 0.1.17+)
-acurai_prompt = PromptTemplate(
-    input_variables=["context", "input"],
-    template="""
-You are an expert assistant for system administrators working with X-Road documentation.
-Your task is to analyze technical problems, investigate causes, and give clear instructions.
-
-Always follow this reasoning structure internally, but show only the ANSWER to the user.
-
-QUESTION: {input}
-TASK: Determine what the user is trying to achieve.
-SYMPTOM: Identify any problem or unclear behavior.
-CONTEXT: {context}
-ANSWER:
-Respond with a clear, structured and helpful answer that includes:
-
-- What the user is trying to do.
-- What could be the causes of the problem.
-- Steps to investigate the issue (e.g. log file paths, commands).
-- Specific instructions to fix or confirm the behavior.
-- Example configuration snippets (if needed).
-- Mention exact filenames, directories or UI locations (if applicable).
-
-Do not answer too briefly. Avoid generalities. Prioritize technical clarity and completeness.
-
-Only show the ANSWER section in your response.
-"""
-)
-
-# 5. Память
-memory = ConversationBufferMemory(
-    return_messages=True,
-    memory_key="chat_history",
-)
-
-# 6. Создание цепочек вручную
-combine_docs_chain = create_stuff_documents_chain(
+# Цепочка с памятью
+qa_chain = ConversationalRetrievalChain.from_llm(
     llm=llm,
-    prompt=acurai_prompt
+    retriever=vectorstore.as_retriever(search_kwargs={"k": 5}),
+    memory=memory,
+    return_source_documents=True,
+    combine_docs_chain_kwargs={"prompt": acurai_prompt},
+    output_key="answer",
+    verbose=True
 )
 
-retriever_with_history = create_history_aware_retriever(
-    llm=llm,
-    retriever=retriever,
-    memory=memory
-)
-
-qa_chain = create_retrieval_chain(
-    retriever=retriever_with_history,
-    combine_docs_chain=combine_docs_chain
-)
-
-# 7. Функция запроса
+# Функция обработки запроса
 def enhanced_query(query: str) -> dict:
-    result = qa_chain.invoke({"input": query})
+    result = qa_chain.invoke({
+        "question": query,
+        "chat_history": memory.chat_memory.messages
+    })
     return {
         "answer": result["answer"],
         "source_documents": [
-            doc.metadata.get("source", "") for doc in result.get("source_documents", [])
+            doc.metadata.get("source", "") for doc in result["source_documents"]
         ],
         "chat_history": memory.chat_memory.messages
     }
 
-# 8. Консольный режим
+# Локальный тест
 if __name__ == "__main__":
     while True:
         user_input = input("Вы: ")
