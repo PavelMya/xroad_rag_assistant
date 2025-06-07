@@ -1,25 +1,27 @@
 import os
 from dotenv import load_dotenv
+
+from langchain.prompts import PromptTemplate
 from langchain_community.vectorstores import FAISS
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
-from langchain.prompts import PromptTemplate
-from langchain_core.chat_history import BaseChatMessageHistory
-from langchain_community.chat_message_histories.in_memory import ChatMessageHistory
-from langchain_core.runnables.history import RunnableWithMessageHistory
-from langchain.chains import create_history_aware_retriever, create_retrieval_chain
+from langchain.memory import ConversationBufferMemory
 
-# Загрузка API-ключа
+from langchain.chains.combine_documents import create_stuff_documents_chain
+from langchain.chains.history_aware_retriever import create_history_aware_retriever
+from langchain.chains.retrieval_qa import create_retrieval_chain
+
+# 1. Загрузка переменных окружения
 load_dotenv()
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
-# Инициализация модели
+# 2. Создание LLM
 llm = ChatOpenAI(
     model="gpt-4o",
     temperature=0.2,
     api_key=OPENAI_API_KEY
 )
 
-# Подключение FAISS-индекса
+# 3. Загрузка векторной БД
 vectorstore = FAISS.load_local(
     folder_path="faiss_index",
     embeddings=OpenAIEmbeddings(api_key=OPENAI_API_KEY),
@@ -27,29 +29,20 @@ vectorstore = FAISS.load_local(
 )
 retriever = vectorstore.as_retriever()
 
-# 🔧 Шаблон только с 'input', потому что 'create_history_aware_retriever' требует это!
-contextualize_q_prompt = PromptTemplate(
-    input_variables=["input"],
-    template="Given the following conversation and a follow up question, rephrase the follow up question to be a standalone question.\n\nChat History:\n{chat_history}\nFollow Up Input: {input}\nStandalone question:"
-)
-
-# 🧠 Создание retriever с историей
-retriever_with_history = create_history_aware_retriever(
-    llm=llm,
-    retriever=retriever,
-    prompt=contextualize_q_prompt
-)
-
-# 🔧 Шаблон для комбинирования документов
-combine_prompt = PromptTemplate(
+# 4. Промпт (в формате LangChain 0.1.17+)
+acurai_prompt = PromptTemplate(
     input_variables=["context", "input"],
     template="""
 You are an expert assistant for system administrators working with X-Road documentation.
 Your task is to analyze technical problems, investigate causes, and give clear instructions.
 
+Always follow this reasoning structure internally, but show only the ANSWER to the user.
+
 QUESTION: {input}
+TASK: Determine what the user is trying to achieve.
+SYMPTOM: Identify any problem or unclear behavior.
 CONTEXT: {context}
-ANSWER: 
+ANSWER:
 Respond with a clear, structured and helpful answer that includes:
 
 - What the user is trying to do.
@@ -59,46 +52,51 @@ Respond with a clear, structured and helpful answer that includes:
 - Example configuration snippets (if needed).
 - Mention exact filenames, directories or UI locations (if applicable).
 
+Do not answer too briefly. Avoid generalities. Prioritize technical clarity and completeness.
+
 Only show the ANSWER section in your response.
 """
 )
 
-# Создание основной цепочки
+# 5. Память
+memory = ConversationBufferMemory(
+    return_messages=True,
+    memory_key="chat_history",
+)
+
+# 6. Создание цепочек вручную
+combine_docs_chain = create_stuff_documents_chain(
+    llm=llm,
+    prompt=acurai_prompt
+)
+
+retriever_with_history = create_history_aware_retriever(
+    llm=llm,
+    retriever=retriever,
+    memory=memory
+)
+
 qa_chain = create_retrieval_chain(
     retriever=retriever_with_history,
-    combine_docs_chain_kwargs={"prompt": combine_prompt}
+    combine_docs_chain=combine_docs_chain
 )
 
-# Функция памяти (в RAM, можно заменить на Redis и т.д.)
-def get_memory(session_id: str) -> BaseChatMessageHistory:
-    return ChatMessageHistory()
-
-# Обёртка с историей
-qa_chain_with_memory = RunnableWithMessageHistory(
-    qa_chain,
-    get_session_history=get_memory,
-    input_messages_key="input",
-    history_messages_key="chat_history"
-)
-
-# Главная функция запроса
+# 7. Функция запроса
 def enhanced_query(query: str) -> dict:
-    result = qa_chain_with_memory.invoke(
-        {"input": query},
-        config={"configurable": {"session_id": "user"}}
-    )
+    result = qa_chain.invoke({"input": query})
     return {
         "answer": result["answer"],
         "source_documents": [
             doc.metadata.get("source", "") for doc in result.get("source_documents", [])
-        ]
+        ],
+        "chat_history": memory.chat_memory.messages
     }
 
-# Консольный режим
+# 8. Консольный режим
 if __name__ == "__main__":
     while True:
-        query = input("Вы: ")
-        if query.lower() in ("exit", "quit", "выход"):
+        user_input = input("Вы: ")
+        if user_input.lower() in ("exit", "quit", "выход"):
             break
-        answer = enhanced_query(query)
-        print("GPT:", answer["answer"])
+        response = enhanced_query(user_input)
+        print("GPT:", response["answer"])
