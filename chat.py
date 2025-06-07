@@ -52,7 +52,7 @@ qa_chain = ConversationalRetrievalChain.from_llm(
     memory=memory,
     return_source_documents=True,
     combine_docs_chain_kwargs={"prompt": acurai_prompt},
-    output_key="answer",  # 🔥 Ключевая строка
+    output_key="answer",  # 👈 ОБЯЗАТЕЛЬНО!
     verbose=True
 )
 
