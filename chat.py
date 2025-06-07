@@ -19,6 +19,7 @@ llm = ChatOpenAI(
 )
 
 # Шаблон AcuRAI без переменной {context}
+
 acurai_prompt = PromptTemplate.from_template("""
 You are a senior assistant for system administrators using X-Road.
 
