@@ -5,7 +5,7 @@ from langchain.chains import ConversationalRetrievalChain
 from langchain_community.vectorstores import FAISS
 from langchain_community.document_loaders import TextLoader
 from langchain_openai import ChatOpenAI
-from langchain.embeddings import OpenAIEmbeddings
+from langchain_openai import OpenAIEmbeddings
 from langchain.memory import ConversationBufferMemory
 from langchain.prompts import PromptTemplate
 
@@ -51,7 +51,10 @@ qa_chain = ConversationalRetrievalChain.from_llm(
     retriever=vectorstore.as_retriever(search_kwargs={"k": 5}),
     memory=memory,
     return_source_documents=True,
-    combine_docs_chain_kwargs={"prompt": acurai_prompt},
+    combine_docs_chain_kwargs={
+        "prompt": acurai_prompt,
+        "document_variable_name": "context"  # <--- вот эта строка фиксит всё!
+    },
     verbose=True
 )
 
