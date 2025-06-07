@@ -33,7 +33,7 @@ memory = ConversationBufferMemory(
     output_key="answer"
 )
 
-# Acurai prompt template
+# Acurai prompt
 acurai_prompt = PromptTemplate(
     input_variables=["question", "context"],
     template="""
@@ -62,17 +62,19 @@ Only show the ANSWER section in your response.
 """
 )
 
-# Настройка цепочки для ответов
-qa_chain = ConversationalRetrievalChain.from_llm(
+# Загружаем цепочку вопросов-ответов
+combine_docs_chain = load_qa_chain(
     llm=llm,
+    chain_type="stuff",
+    prompt=acurai_prompt,
+    document_variable_name="context"
+)
+
+# Итоговая цепочка с памятью
+qa_chain = ConversationalRetrievalChain(
     retriever=retriever,
     memory=memory,
-    combine_docs_chain=load_qa_chain(
-        llm=llm,
-        chain_type="stuff",
-        prompt=acurai_prompt,
-        document_variable_name="context"
-    ),
+    combine_docs_chain=combine_docs_chain,
     return_source_documents=True
 )
 
@@ -90,7 +92,7 @@ def enhanced_query(query: str) -> dict:
         "chat_history": memory.chat_memory.messages
     }
 
-# Для консоли
+# Для отладки в консоли
 if __name__ == "__main__":
     while True:
         user_input = input("Вы: ")
