@@ -1,21 +1,22 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>X-Road Assistant</title>
+  <meta charset="UTF-8">
+  <title>GPT X-Road Assistant</title>
   <style>
     body {
-      font-family: sans-serif;
-      background-color: #f9fbfd;
-      padding: 30px;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f8f9fb;
+      margin: 0;
+      padding: 0;
     }
     .container {
       max-width: 800px;
-      margin: auto;
+      margin: 40px auto;
+      padding: 30px;
       background: #fff;
       border-radius: 10px;
-      padding: 25px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
     }
     h1 {
       text-align: center;
@@ -23,69 +24,58 @@
     }
     #chat-box {
       margin-top: 20px;
-    }
-    .message {
-      margin-bottom: 30px;
+      max-height: 500px;
+      overflow-y: auto;
     }
     .question {
       font-weight: bold;
-      margin-bottom: 10px;
-      color: #004085;
-    }
-    .metadata {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      font-size: 14px;
-      color: #555;
-      margin-bottom: 12px;
-    }
-    .meta-item {
-      background: #e9f5ff;
-      padding: 6px 10px;
-      border-radius: 6px;
-      border-left: 4px solid #3399ff;
+      margin-top: 15px;
+      color: #00529B;
     }
     .answer {
-      background: #eef6ff;
+      margin-bottom: 20px;
+      background-color: #f1f8ff;
       padding: 15px;
-      border-radius: 8px;
       border-left: 5px solid #3399ff;
-      line-height: 1.6;
-      white-space: pre-line;
+      border-radius: 6px;
+    }
+    .info-block p {
+      margin: 5px 0;
+    }
+    .info-block strong {
+      color: #444;
     }
     form {
-      margin-top: 30px;
       display: flex;
+      margin-top: 20px;
       gap: 10px;
     }
     input[type="text"] {
-      flex: 1;
-      padding: 12px;
+      flex-grow: 1;
+      padding: 10px;
+      font-size: 14px;
       border-radius: 6px;
       border: 1px solid #ccc;
     }
     button {
-      padding: 12px 18px;
-      background: #007bff;
-      color: white;
+      padding: 10px 20px;
+      background-color: #3399ff;
+      color: #fff;
       border: none;
       border-radius: 6px;
       cursor: pointer;
     }
     button:hover {
-      background: #0056b3;
+      background-color: #0077dd;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>Chat with X-Road Assistant</h1>
-
+    <h1>🧠 GPT X-Road Assistant</h1>
     <div id="chat-box"></div>
-
     <form id="chat-form">
-      <input type="text" id="question" placeholder="Ask something..." required />
+      <input type="text" id="question" placeholder="Enter your technical question..." required>
       <button type="submit">Ask</button>
     </form>
   </div>
@@ -96,17 +86,12 @@
 
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
-
-      const questionInput = document.getElementById("question");
-      const question = questionInput.value.trim();
+      const input = document.getElementById("question");
+      const question = input.value.trim();
       if (!question) return;
 
-      chatBox.innerHTML += `
-        <div class="message">
-          <div class="question">❓ ${question}</div>
-        </div>
-      `;
-      questionInput.value = "";
+      chatBox.innerHTML += `<p class="question">❓ ${question}</p>`;
+      input.value = "";
 
       const res = await fetch("/chat", {
         method: "POST",
@@ -115,22 +100,21 @@
       });
       const data = await res.json();
 
-      const meta = (label, value) =>
-        value ? `<div class="meta-item"><strong>${label}:</strong> ${value}</div>` : "";
-
-      chatBox.innerHTML += `
-        <div class="message">
-          <div class="metadata">
-            ${meta("🎯 Task", data.task)}
-            ${meta("🧩 System", data.system)}
-            ${meta("🚨 Symptom", data.symptom)}
-            ${meta("📄 Context", data.context)}
-            ${meta("✅ Confidence", data.confidence)}
+      const block = `
+        <div class="answer">
+          <div class="info-block">
+            <p><strong>🎯 Task:</strong> ${data.task || "-"}</p>
+            <p><strong>🧩 System:</strong> ${data.system || "-"}</p>
+            <p><strong>🚨 Symptom:</strong> ${data.symptom || "-"}</p>
+            <p><strong>📄 Context:</strong> ${data.context || "-"}</p>
+            <p><strong>✅ Confidence:</strong> ${data.confidence || "-"}</p>
           </div>
-          <div class="answer">💬 ${data.answer}</div>
+          <div class="response">
+            💬 ${data.answer}
+          </div>
         </div>
       `;
-
+      chatBox.innerHTML += block;
       chatBox.scrollTop = chatBox.scrollHeight;
     });
   </script>
