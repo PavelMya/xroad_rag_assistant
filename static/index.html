@@ -2,92 +2,93 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <title>RAG Chat</title>
+  <title>RAG Chat – X-Road Assistant</title>
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
-      background-color: #f5f7fa;
+      background: linear-gradient(to right, #e6f0ff, #ffffff);
       margin: 0;
       padding: 0;
-      display: flex;
-      justify-content: center;
-      align-items: flex-start;
-      min-height: 100vh;
     }
     .container {
       background: white;
       width: 90%;
-      max-width: 700px;
-      margin-top: 50px;
-      padding: 30px;
+      max-width: 720px;
+      margin: 40px auto;
+      padding: 30px 40px;
       border-radius: 12px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 6px 25px rgba(0, 0, 0, 0.15);
     }
     h1 {
       text-align: center;
-      margin-bottom: 20px;
-      color: #333;
+      color: #004080;
+      margin-bottom: 30px;
     }
     #chat-box {
       max-height: 500px;
       overflow-y: auto;
+      border: 1px solid #cce;
+      background-color: #f7fbff;
+      padding: 20px;
+      border-radius: 10px;
       margin-bottom: 20px;
-      padding: 10px;
-      border: 1px solid #ddd;
-      border-radius: 8px;
-      background-color: #fafafa;
     }
     .question {
-      font-weight: bold;
-      margin: 10px 0 4px;
-      color: #0066cc;
+      font-weight: 600;
+      color: #1a73e8;
+      margin-top: 20px;
     }
     .answer {
-      margin-bottom: 20px;
-      padding: 10px;
-      background-color: #eef6ff;
+      background: #eef6ff;
+      padding: 12px 16px;
       border-left: 4px solid #3399ff;
-      border-radius: 5px;
+      border-radius: 6px;
+      margin-top: 6px;
+      white-space: pre-wrap;
     }
     .acurai-fields {
       font-size: 13px;
-      margin-bottom: 8px;
-      padding: 10px;
       background-color: #f0f8ff;
-      border-radius: 6px;
+      padding: 10px 14px;
+      margin-top: 10px;
       border-left: 4px solid #87cefa;
-    }
-    .acurai-fields p {
-      margin: 4px 0;
+      border-radius: 6px;
+      line-height: 1.4;
     }
     #chat-form {
       display: flex;
-      gap: 10px;
+      gap: 12px;
+      margin-top: 20px;
     }
     #question {
-      flex-grow: 1;
-      padding: 10px;
+      flex: 1;
+      padding: 12px;
+      font-size: 15px;
       border: 1px solid #ccc;
       border-radius: 8px;
-      font-size: 14px;
     }
     button {
-      padding: 10px 20px;
-      background-color: #3399ff;
+      padding: 12px 22px;
+      font-size: 14px;
+      background-color: #1a73e8;
       color: white;
       border: none;
       border-radius: 8px;
       cursor: pointer;
-      transition: background 0.2s ease;
     }
     button:hover {
-      background-color: #0077dd;
+      background-color: #1669c1;
+    }
+    img.logo {
+      max-height: 60px;
+      display: block;
+      margin: 0 auto 10px;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <img src="/static/logo.png" alt="Logo" style="max-height: 60px; display: block; margin: 0 auto 10px;">
+    <img src="/static/logo.png" alt="Logo" class="logo">
     <h1>Chat with X-Road Docs</h1>
     <div id="chat-box"></div>
     <form id="chat-form">
@@ -120,11 +121,11 @@
       let acurai = "";
       if (data.task || data.system || data.symptom || data.context || data.confidence) {
         acurai += `<div class="acurai-fields">`;
-        if (data.task) acurai += `<p><strong>Task:</strong> ${data.task}</p>`;
-        if (data.system) acurai += `<p><strong>System:</strong> ${data.system}</p>`;
-        if (data.symptom) acurai += `<p><strong>Symptom:</strong> ${data.symptom}</p>`;
-        if (data.context) acurai += `<p><strong>Context:</strong> ${data.context}</p>`;
-        if (data.confidence) acurai += `<p><strong>Confidence:</strong> ${data.confidence}</p>`;
+        if (data.task) acurai += `<p><strong>🎯 Task:</strong> ${data.task}</p>`;
+        if (data.system) acurai += `<p><strong>🧩 System:</strong> ${data.system}</p>`;
+        if (data.symptom) acurai += `<p><strong>🚨 Symptom:</strong> ${data.symptom}</p>`;
+        if (data.context) acurai += `<p><strong>📄 Context:</strong> ${data.context}</p>`;
+        if (data.confidence) acurai += `<p><strong>✅ Confidence:</strong> ${data.confidence}</p>`;
         acurai += `</div>`;
       }
 
