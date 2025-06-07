@@ -1,54 +1,33 @@
 import os
 from dotenv import load_dotenv
-from langchain.prompts import PromptTemplate
-from langchain.memory import ConversationBufferMemory
-from langchain.chains.question_answering import load_qa_chain
-from langchain.chains import create_history_aware_retriever, create_retrieval_chain
 from langchain_community.vectorstores import FAISS
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
+from langchain_core.chat_history import BaseChatMessageHistory
+from langchain_community.chat_message_histories.in_memory import ChatMessageHistory
+from langchain_core.runnables.history import RunnableWithMessageHistory
+from langchain.prompts import PromptTemplate
+from langchain.chains import create_history_aware_retriever, create_retrieval_chain
 
-# Load environment variables
+# Загрузка переменных окружения
 load_dotenv()
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
-# Initialize the language model
+# LLM
 llm = ChatOpenAI(
     model="gpt-4o",
     temperature=0.2,
     api_key=OPENAI_API_KEY
 )
 
-# Load FAISS index
+# Подгружаем индекс
 vectorstore = FAISS.load_local(
     folder_path="faiss_index",
     embeddings=OpenAIEmbeddings(api_key=OPENAI_API_KEY),
     allow_dangerous_deserialization=True
 )
+retriever = vectorstore.as_retriever()
 
-# Memory
-memory = ConversationBufferMemory(
-    return_messages=True,
-    memory_key="chat_history",
-    output_key="answer"
-)
-
-# Prompt for history-aware retriever
-history_prompt = PromptTemplate(
-    input_variables=["chat_history", "input"],
-    template="""
-You are a helpful assistant for X-Road system administrators.
-Use the following conversation history and the new question to form a better search query.
-
-Chat History:
-{chat_history}
-
-New Question:
-{input}
-
-Rewritten Search Query:"""
-)
-
-# Prompt for final answer generation
+# Твой кастомный промпт
 acurai_prompt = PromptTemplate(
     input_variables=["question", "context"],
     template="""
@@ -77,41 +56,45 @@ Only show the ANSWER section in your response.
 """
 )
 
-# Create retriever with history-awareness
-retriever_with_memory = create_history_aware_retriever(
+# Создаём retriever с историей
+retriever_with_history = create_history_aware_retriever(
     llm=llm,
-    retriever=vectorstore.as_retriever(),
-    prompt=history_prompt
+    retriever=retriever,
+    prompt=acurai_prompt
 )
 
-# Create final retrieval chain
+# Основная цепочка: сначала достаём документы, затем обрабатываем
 qa_chain = create_retrieval_chain(
-    retriever=retriever_with_memory,
-    combine_docs_chain=load_qa_chain(
-        llm=llm,
-        chain_type="stuff",
-        prompt=acurai_prompt,
-        document_variable_name="context"
-    ),
-    memory=memory
+    retriever=retriever_with_history,
+    combine_docs_chain_kwargs={"prompt": acurai_prompt}
 )
 
-# Function to run query
+# Создаём функцию для получения истории
+def get_memory(session_id: str) -> BaseChatMessageHistory:
+    return ChatMessageHistory()
 
+# Оборачиваем цепочку с памятью
+qa_chain_with_memory = RunnableWithMessageHistory(
+    qa_chain,
+    get_session_history=get_memory,
+    input_messages_key="input",
+    history_messages_key="chat_history"
+)
+
+# Основная функция
 def enhanced_query(query: str) -> dict:
-    result = qa_chain.invoke({
-        "input": query,
-        "chat_history": memory.chat_memory.messages
-    })
+    result = qa_chain_with_memory.invoke(
+        {"input": query},
+        config={"configurable": {"session_id": "user"}}
+    )
     return {
         "answer": result["answer"],
         "source_documents": [
             doc.metadata.get("source", "") for doc in result.get("source_documents", [])
-        ],
-        "chat_history": memory.chat_memory.messages
+        ]
     }
 
-# CLI for local testing
+# Консольный режим
 if __name__ == "__main__":
     while True:
         user_input = input("Вы: ")
