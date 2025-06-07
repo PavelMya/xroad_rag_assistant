@@ -46,14 +46,13 @@ vectorstore = FAISS.load_local(
     allow_dangerous_deserialization=True
 )
 
-# Создание цепочки с retrieval и prompt
 qa_chain = ConversationalRetrievalChain.from_llm(
     llm=llm,
     retriever=vectorstore.as_retriever(search_kwargs={"k": 5}),
     memory=memory,
     return_source_documents=True,
     combine_docs_chain_kwargs={"prompt": acurai_prompt},
-    output_key="answer",  # <-- ДОБАВЬ ЭТУ СТРОКУ!
+    output_key="answer",  # 🔥 Ключевая строка
     verbose=True
 )
 
