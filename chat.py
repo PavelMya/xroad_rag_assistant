@@ -28,19 +28,18 @@ memory = ConversationBufferMemory(
 # Acurai prompt template
 
 acurai_prompt = PromptTemplate(
-    input_variables=["question", "context"],
+    input_variables=["question", "context"],  # ВАЖНО: context включён!
     template="""
 You are an expert assistant for system administrators working with X-Road documentation.
 Your task is to analyze technical problems, investigate causes, and give clear instructions.
 
-Always follow this reasoning structure internally, but show only the final ANSWER to the user.
+Always follow this reasoning structure internally, but show only the ANSWER to the user.
 
 QUESTION: {question}
 TASK: Determine what the user is trying to achieve.
 SYMPTOM: Identify any problem or unclear behavior.
-CONTEXT: Use relevant documentation and prior context to understand what may be wrong.
-
-ANSWER:
+CONTEXT: {context}
+ANSWER: 
 Respond with a clear, structured and helpful answer that includes:
 
 - What the user is trying to do.
@@ -52,7 +51,7 @@ Respond with a clear, structured and helpful answer that includes:
 
 Do not answer too briefly. Avoid generalities. Prioritize technical clarity and completeness.
 
-Only output the ANSWER section. Do not show QUESTION, TASK, SYMPTOM or CONTEXT.
+Only show the ANSWER section in your response.
 """
 )
 
@@ -67,7 +66,7 @@ llm_chain = load_qa_chain(
     llm=llm,
     chain_type="stuff",
     prompt=acurai_prompt,
-    document_variable_name="context"  # 🔥 это ключ!
+    document_variable_name="context"  # 👈 обязательно!
 )
 # Цепочка с памятью и указанием output_key
 qa_chain = ConversationalRetrievalChain.from_llm(
