@@ -36,3 +36,7 @@ async def chat_endpoint(request: QueryRequest):
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("app:app", host="0.0.0.0", port=8000, reload=True)
+
+@app.get("/")
+def root():
+    return {"message": "ChatGPT assistant is running. Use POST /chat to interact."}
