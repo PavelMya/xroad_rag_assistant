@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 from langchain.chains import ConversationalRetrievalChain
 from langchain_community.vectorstores import FAISS
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
+from langchain.memory import ConversationBufferMemory
 from langchain.prompts import PromptTemplate
 
 # Загрузка переменных окружения
@@ -15,6 +16,12 @@ llm = ChatOpenAI(
     model="gpt-4o",
     temperature=0.2,
     api_key=OPENAI_API_KEY
+)
+
+# Память чата — обязательно, иначе будет ошибка
+memory = ConversationBufferMemory(
+    memory_key="chat_history",
+    return_messages=True
 )
 
 # Acurai prompt template
@@ -38,22 +45,22 @@ vectorstore = FAISS.load_local(
     allow_dangerous_deserialization=True
 )
 
-# Создание цепочки без памяти (или можно позже заменить)
+# Цепочка с памятью и указанием output_key
 qa_chain = ConversationalRetrievalChain.from_llm(
     llm=llm,
     retriever=vectorstore.as_retriever(search_kwargs={"k": 5}),
+    memory=memory,
     return_source_documents=True,
     combine_docs_chain_kwargs={"prompt": acurai_prompt},
-    output_key="answer",  # Указано явно
+    output_key="answer",
     verbose=True
 )
 
-# Функция чата
+# Функция запроса
 def enhanced_query(query: str) -> dict:
-    """Основной метод запроса к модели."""
     result = qa_chain.invoke({
         "question": query,
-        "chat_history": memory.chat_memory.messages  # 🔥 ОБЯЗАТЕЛЬНО!
+        "chat_history": memory.chat_memory.messages  # 🧠 обязательно!
     })
     return {
         "answer": result["answer"],
@@ -63,11 +70,11 @@ def enhanced_query(query: str) -> dict:
         "chat_history": memory.chat_memory.messages
     }
 
-# Тест в консоли
+# Для консоли
 if __name__ == "__main__":
     while True:
         user_input = input("Вы: ")
-        if user_input.lower() in ("выход", "exit", "quit"):
+        if user_input.lower() in ("exit", "quit", "выход"):
             break
         response = enhanced_query(user_input)
         print("GPT:", response["answer"])
