@@ -26,7 +26,10 @@ memory = ConversationBufferMemory(
 )
 
 # Acurai prompt template
-acurai_prompt = PromptTemplate.from_template("""
+
+acurai_prompt = PromptTemplate(
+    input_variables=["question", "context"],
+    template="""
 You are an expert assistant for system administrators working with X-Road documentation.
 Your task is to analyze technical problems, investigate causes, and give clear instructions.
 
@@ -49,7 +52,8 @@ Respond with a clear, structured and helpful answer that includes:
 Do not answer too briefly. Avoid generalities. Prioritize technical clarity and completeness.
 
 Only show the ANSWER section in your response.
-""")
+"""
+)
 
 # Загрузка FAISS индекса
 vectorstore = FAISS.load_local(
