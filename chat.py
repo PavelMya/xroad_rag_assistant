@@ -18,14 +18,7 @@ llm = ChatOpenAI(
     api_key=OPENAI_API_KEY
 )
 
-# Память с указанием output_key
-memory = ConversationBufferMemory(
-    memory_key="chat_history",
-    return_messages=True,
-    output_key="answer"  # 🧠 чтобы память не ломалась
-)
-
-# Шаблон запроса (AcuRAI)
+# Шаблон AcuRAI без переменной {context}
 acurai_prompt = PromptTemplate.from_template("""
 You are a senior assistant for system administrators using X-Road.
 
@@ -37,7 +30,7 @@ Always reason through the following steps (internally), but show only the final 
 QUESTION: {question}
 TASK: What does the user want to achieve?
 SYMPTOM: What is going wrong?
-CONTEXT: Use documentation, known issues, and common misconfigurations.
+CONTEXT: Use retrieved documentation and common misconfigurations.
 ---
 
 ANSWER: 
@@ -59,14 +52,21 @@ Style:
 Only show the ANSWER section in your response.
 """)
 
-# Индекс FAISS
+# Память чата
+memory = ConversationBufferMemory(
+    memory_key="chat_history",
+    return_messages=True,
+    output_key="answer"
+)
+
+# Векторная база FAISS
 vectorstore = FAISS.load_local(
     folder_path="faiss_index",
     embeddings=OpenAIEmbeddings(api_key=OPENAI_API_KEY),
     allow_dangerous_deserialization=True
 )
 
-# Цепочка с памятью
+# Цепочка вопрос-ответ
 qa_chain = ConversationalRetrievalChain.from_llm(
     llm=llm,
     retriever=vectorstore.as_retriever(search_kwargs={"k": 5}),
@@ -77,7 +77,7 @@ qa_chain = ConversationalRetrievalChain.from_llm(
     verbose=True
 )
 
-# Функция обработки запроса
+# Обработка запроса
 def enhanced_query(query: str) -> dict:
     result = qa_chain.invoke({
         "question": query,
@@ -91,7 +91,7 @@ def enhanced_query(query: str) -> dict:
         "chat_history": memory.chat_memory.messages
     }
 
-# Локальный тест
+# Локальный запуск
 if __name__ == "__main__":
     while True:
         user_input = input("Вы: ")
