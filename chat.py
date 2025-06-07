@@ -71,9 +71,13 @@ llm_chain = load_qa_chain(
 # Цепочка с памятью и указанием output_key
 qa_chain = ConversationalRetrievalChain.from_llm(
     llm=llm,
-    retriever=vectorstore.as_retriever(),
+    retriever=retriever,
+    chain_type="stuff",
+    chain_type_kwargs={
+        "prompt": acurai_prompt,
+        "document_variable_name": "context"
+    },
     memory=memory,
-    combine_docs_chain=llm_chain,  # 🔥 Без этого будет ошибка
     return_source_documents=True
 )
 
