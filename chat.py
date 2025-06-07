@@ -66,9 +66,9 @@ vectorstore = FAISS.load_local(
 llm_chain = load_qa_chain(
     llm=llm,
     chain_type="stuff",
-    prompt=acurai_prompt
+    prompt=acurai_prompt,
+    document_variable_name="context"  # 🔥 это ключ!
 )
-
 # Цепочка с памятью и указанием output_key
 qa_chain = ConversationalRetrievalChain.from_llm(
     llm=llm,
