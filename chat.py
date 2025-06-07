@@ -1,39 +1,30 @@
 import os
 from dotenv import load_dotenv
-from langchain.chains import ConversationalRetrievalChain
-from langchain.chains.question_answering import load_qa_chain
 from langchain_community.vectorstores import FAISS
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from langchain.memory import ConversationBufferMemory
 from langchain.prompts import PromptTemplate
+from langchain.chains.combine_documents import create_stuff_documents_chain
+from langchain.chains import create_history_aware_retriever, create_retrieval_chain
 
 # Загрузка переменных окружения
 load_dotenv()
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
-# Настройки модели
+# LLM
 llm = ChatOpenAI(
     model="gpt-4o",
     temperature=0.2,
     api_key=OPENAI_API_KEY
 )
 
-# Загрузка FAISS индекса
-vectorstore = FAISS.load_local(
-    folder_path="faiss_index",
-    embeddings=OpenAIEmbeddings(api_key=OPENAI_API_KEY),
-    allow_dangerous_deserialization=True
-)
-retriever = vectorstore.as_retriever()
-
 # Память чата
 memory = ConversationBufferMemory(
     memory_key="chat_history",
-    return_messages=True,
-    output_key="answer"
+    return_messages=True
 )
 
-# Acurai prompt
+# Шаблон Prompt
 acurai_prompt = PromptTemplate(
     input_variables=["question", "context"],
     template="""
@@ -46,7 +37,7 @@ QUESTION: {question}
 TASK: Determine what the user is trying to achieve.
 SYMPTOM: Identify any problem or unclear behavior.
 CONTEXT: {context}
-ANSWER: 
+ANSWER:
 Respond with a clear, structured and helpful answer that includes:
 
 - What the user is trying to do.
@@ -62,20 +53,29 @@ Only show the ANSWER section in your response.
 """
 )
 
-# Загружаем цепочку вопросов-ответов
-combine_docs_chain = load_qa_chain(
+# FAISS retriever
+vectorstore = FAISS.load_local(
+    folder_path="faiss_index",
+    embeddings=OpenAIEmbeddings(api_key=OPENAI_API_KEY),
+    allow_dangerous_deserialization=True
+)
+retriever = vectorstore.as_retriever()
+
+# Исторически-осведомлённый retriever
+retriever_with_memory = create_history_aware_retriever(
     llm=llm,
-    chain_type="stuff",
-    prompt=acurai_prompt,
-    document_variable_name="context"
+    retriever=retriever,
+    memory=memory
 )
 
-# Итоговая цепочка с памятью
-qa_chain = ConversationalRetrievalChain(
-    retriever=retriever,
-    memory=memory,
-    combine_docs_chain=combine_docs_chain,
-    return_source_documents=True
+# Chain для генерации ответа
+document_chain = create_stuff_documents_chain(
+    llm=llm,
+    prompt=acurai_prompt
+)
+qa_chain = create_retrieval_chain(
+    retriever=retriever_with_memory,
+    combine_docs_chain=document_chain
 )
 
 # Функция запроса
@@ -92,7 +92,7 @@ def enhanced_query(query: str) -> dict:
         "chat_history": memory.chat_memory.messages
     }
 
-# Для отладки в консоли
+# CLI
 if __name__ == "__main__":
     while True:
         user_input = input("Вы: ")
