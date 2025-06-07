@@ -40,7 +40,7 @@ Only return the ANSWER section in your response.
 
 # Загрузка FAISS индекса
 vectorstore = FAISS.load_local(
-    folder_path="faiss_index/faiss_index",
+    folder_path="faiss_index",
     embeddings=OpenAIEmbeddings(api_key=OPENAI_API_KEY),
     allow_dangerous_deserialization=True
 )
