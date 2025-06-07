@@ -1,98 +1,91 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>RAG Chat – X-Road Assistant</title>
+  <meta charset="UTF-8" />
+  <title>X-Road Assistant</title>
   <style>
     body {
-      font-family: 'Segoe UI', sans-serif;
-      background: linear-gradient(to right, #e6f0ff, #ffffff);
-      margin: 0;
-      padding: 0;
+      font-family: sans-serif;
+      background-color: #f9fbfd;
+      padding: 30px;
     }
     .container {
-      background: white;
-      width: 90%;
-      max-width: 720px;
-      margin: 40px auto;
-      padding: 30px 40px;
-      border-radius: 12px;
-      box-shadow: 0 6px 25px rgba(0, 0, 0, 0.15);
+      max-width: 800px;
+      margin: auto;
+      background: #fff;
+      border-radius: 10px;
+      padding: 25px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
     }
     h1 {
       text-align: center;
-      color: #004080;
-      margin-bottom: 30px;
+      color: #333;
     }
     #chat-box {
-      max-height: 500px;
-      overflow-y: auto;
-      border: 1px solid #cce;
-      background-color: #f7fbff;
-      padding: 20px;
-      border-radius: 10px;
-      margin-bottom: 20px;
+      margin-top: 20px;
+    }
+    .message {
+      margin-bottom: 30px;
     }
     .question {
-      font-weight: 600;
-      color: #1a73e8;
-      margin-top: 20px;
+      font-weight: bold;
+      margin-bottom: 10px;
+      color: #004085;
+    }
+    .metadata {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      font-size: 14px;
+      color: #555;
+      margin-bottom: 12px;
+    }
+    .meta-item {
+      background: #e9f5ff;
+      padding: 6px 10px;
+      border-radius: 6px;
+      border-left: 4px solid #3399ff;
     }
     .answer {
       background: #eef6ff;
-      padding: 12px 16px;
-      border-left: 4px solid #3399ff;
-      border-radius: 6px;
-      margin-top: 6px;
-      white-space: pre-wrap;
+      padding: 15px;
+      border-radius: 8px;
+      border-left: 5px solid #3399ff;
+      line-height: 1.6;
+      white-space: pre-line;
     }
-    .acurai-fields {
-      font-size: 13px;
-      background-color: #f0f8ff;
-      padding: 10px 14px;
-      margin-top: 10px;
-      border-left: 4px solid #87cefa;
-      border-radius: 6px;
-      line-height: 1.4;
-    }
-    #chat-form {
+    form {
+      margin-top: 30px;
       display: flex;
-      gap: 12px;
-      margin-top: 20px;
+      gap: 10px;
     }
-    #question {
+    input[type="text"] {
       flex: 1;
       padding: 12px;
-      font-size: 15px;
+      border-radius: 6px;
       border: 1px solid #ccc;
-      border-radius: 8px;
     }
     button {
-      padding: 12px 22px;
-      font-size: 14px;
-      background-color: #1a73e8;
+      padding: 12px 18px;
+      background: #007bff;
       color: white;
       border: none;
-      border-radius: 8px;
+      border-radius: 6px;
       cursor: pointer;
     }
     button:hover {
-      background-color: #1669c1;
-    }
-    img.logo {
-      max-height: 60px;
-      display: block;
-      margin: 0 auto 10px;
+      background: #0056b3;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <img src="/static/logo.png" alt="Logo" class="logo">
-    <h1>Chat with X-Road Docs</h1>
+    <h1>Chat with X-Road Assistant</h1>
+
     <div id="chat-box"></div>
+
     <form id="chat-form">
-      <input type="text" id="question" placeholder="Ask a question..." required>
+      <input type="text" id="question" placeholder="Ask something..." required />
       <button type="submit">Ask</button>
     </form>
   </div>
@@ -103,11 +96,16 @@
 
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
+
       const questionInput = document.getElementById("question");
       const question = questionInput.value.trim();
       if (!question) return;
 
-      chatBox.innerHTML += `<p class="question">❓ ${question}</p>`;
+      chatBox.innerHTML += `
+        <div class="message">
+          <div class="question">❓ ${question}</div>
+        </div>
+      `;
       questionInput.value = "";
 
       const res = await fetch("/chat", {
@@ -115,26 +113,24 @@
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ question }),
       });
-
       const data = await res.json();
 
-      let acurai = "";
-      if (data.task || data.system || data.symptom || data.context || data.confidence) {
-        acurai += `<div class="acurai-fields">`;
-        if (data.task) acurai += `<p><strong>🎯 Task:</strong> ${data.task}</p>`;
-        if (data.system) acurai += `<p><strong>🧩 System:</strong> ${data.system}</p>`;
-        if (data.symptom) acurai += `<p><strong>🚨 Symptom:</strong> ${data.symptom}</p>`;
-        if (data.context) acurai += `<p><strong>📄 Context:</strong> ${data.context}</p>`;
-        if (data.confidence) acurai += `<p><strong>✅ Confidence:</strong> ${data.confidence}</p>`;
-        acurai += `</div>`;
-      }
+      const meta = (label, value) =>
+        value ? `<div class="meta-item"><strong>${label}:</strong> ${value}</div>` : "";
 
       chatBox.innerHTML += `
-        <div class="answer">
-          ${acurai}
-          💬 ${data.answer}
+        <div class="message">
+          <div class="metadata">
+            ${meta("🎯 Task", data.task)}
+            ${meta("🧩 System", data.system)}
+            ${meta("🚨 Symptom", data.symptom)}
+            ${meta("📄 Context", data.context)}
+            ${meta("✅ Confidence", data.confidence)}
+          </div>
+          <div class="answer">💬 ${data.answer}</div>
         </div>
       `;
+
       chatBox.scrollTop = chatBox.scrollHeight;
     });
   </script>
