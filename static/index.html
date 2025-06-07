@@ -2,121 +2,160 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>GPT X-Road Assistant</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GPT-4o X-Road Assistant</title>
+  <link rel="icon" href="logo.png">
   <style>
     body {
-      font-family: 'Segoe UI', sans-serif;
-      background-color: #f8f9fb;
       margin: 0;
       padding: 0;
-    }
-    .container {
-      max-width: 800px;
-      margin: 40px auto;
-      padding: 30px;
-      background: #fff;
-      border-radius: 10px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-    }
-    h1 {
-      text-align: center;
-      color: #333;
-    }
-    #chat-box {
-      margin-top: 20px;
-      max-height: 500px;
-      overflow-y: auto;
-    }
-    .question {
-      font-weight: bold;
-      margin-top: 15px;
-      color: #00529B;
-    }
-    .answer {
-      margin-bottom: 20px;
-      background-color: #f1f8ff;
-      padding: 15px;
-      border-left: 5px solid #3399ff;
-      border-radius: 6px;
-    }
-    .info-block p {
-      margin: 5px 0;
-    }
-    .info-block strong {
-      color: #444;
-    }
-    form {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f0f2f5;
       display: flex;
-      margin-top: 20px;
-      gap: 10px;
+      flex-direction: column;
+      height: 100vh;
     }
-    input[type="text"] {
-      flex-grow: 1;
-      padding: 10px;
-      font-size: 14px;
-      border-radius: 6px;
+
+    header {
+      background-color: #ffffff;
+      padding: 1rem 2rem;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    header img {
+      height: 40px;
+    }
+
+    header h1 {
+      font-size: 1.5rem;
+      margin: 0;
+      color: #222;
+    }
+
+    #chat-box {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1.5rem 2rem;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .message {
+      max-width: 80%;
+      margin-bottom: 1rem;
+      line-height: 1.5;
+    }
+
+    .user-message {
+      align-self: flex-end;
+      background-color: #d1e7ff;
+      padding: 1rem;
+      border-radius: 12px 12px 0 12px;
+      color: #003366;
+    }
+
+    .bot-message {
+      align-self: flex-start;
+      background-color: #ffffff;
       border: 1px solid #ccc;
+      padding: 1rem;
+      border-radius: 12px 12px 12px 0;
+      color: #000;
     }
+
+    .sources {
+      font-size: 0.8rem;
+      margin-top: 0.5rem;
+      color: #666;
+    }
+
+    footer {
+      display: flex;
+      padding: 1rem 2rem;
+      background-color: #ffffff;
+      box-shadow: 0 -2px 4px rgba(0,0,0,0.05);
+    }
+
+    #question {
+      flex: 1;
+      padding: 0.8rem;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 1rem;
+    }
+
     button {
-      padding: 10px 20px;
-      background-color: #3399ff;
-      color: #fff;
+      margin-left: 1rem;
+      background-color: #007bff;
+      color: white;
+      padding: 0.8rem 1.5rem;
       border: none;
-      border-radius: 6px;
+      border-radius: 8px;
+      font-size: 1rem;
       cursor: pointer;
     }
+
     button:hover {
-      background-color: #0077dd;
+      background-color: #0056b3;
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>🧠 GPT X-Road Assistant</h1>
-    <div id="chat-box"></div>
-    <form id="chat-form">
-      <input type="text" id="question" placeholder="Enter your technical question..." required>
-      <button type="submit">Ask</button>
-    </form>
-  </div>
+  <header>
+    <img src="logo.png" alt="Logo">
+    <h1>GPT-4o X-Road Assistant</h1>
+  </header>
+
+  <div id="chat-box"></div>
+
+  <footer>
+    <input type="text" id="question" placeholder="Ask your question..." autocomplete="off" />
+    <button id="ask-btn">Ask</button>
+  </footer>
 
   <script>
-    const form = document.getElementById("chat-form");
     const chatBox = document.getElementById("chat-box");
+    const askBtn = document.getElementById("ask-btn");
+    const input = document.getElementById("question");
 
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const input = document.getElementById("question");
+    askBtn.addEventListener("click", sendMessage);
+    input.addEventListener("keydown", e => {
+      if (e.key === "Enter") sendMessage();
+    });
+
+    async function sendMessage() {
       const question = input.value.trim();
       if (!question) return;
 
-      chatBox.innerHTML += `<p class="question">❓ ${question}</p>`;
+      chatBox.innerHTML += `<div class="message user-message">${question}</div>`;
+      chatBox.scrollTop = chatBox.scrollHeight;
+
       input.value = "";
 
-      const res = await fetch("/chat", {
+      const response = await fetch("/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question }),
+        body: JSON.stringify({ question })
       });
-      const data = await res.json();
 
-      const block = `
-        <div class="answer">
-          <div class="info-block">
-            <p><strong>🎯 Task:</strong> ${data.task || "-"}</p>
-            <p><strong>🧩 System:</strong> ${data.system || "-"}</p>
-            <p><strong>🚨 Symptom:</strong> ${data.symptom || "-"}</p>
-            <p><strong>📄 Context:</strong> ${data.context || "-"}</p>
-            <p><strong>✅ Confidence:</strong> ${data.confidence || "-"}</p>
-          </div>
-          <div class="response">
-            💬 ${data.answer}
-          </div>
+      const data = await response.json();
+
+      const sources = data.sources?.length
+        ? `<div class="sources">Sources: ${data.sources.join(", ")}</div>`
+        : "";
+
+      chatBox.innerHTML += `
+        <div class="message bot-message">
+          ${data.answer}
+          ${sources}
         </div>
       `;
-      chatBox.innerHTML += block;
+
       chatBox.scrollTop = chatBox.scrollHeight;
-    });
+    }
   </script>
 </body>
 </html>
