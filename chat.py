@@ -21,7 +21,8 @@ llm = ChatOpenAI(
 # Память чата — обязательно, иначе будет ошибка
 memory = ConversationBufferMemory(
     memory_key="chat_history",
-    return_messages=True
+    return_messages=True,
+    output_key="answer"  # 🔥 ОБЯЗАТЕЛЬНО!
 )
 
 # Acurai prompt template
