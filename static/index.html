@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
-  <meta charset="UTF-8" />
-  <title>GPT Chat with X-Road Docs</title>
+  <meta charset="UTF-8">
+  <title>RAG Chat</title>
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
@@ -18,17 +18,18 @@
       background: white;
       width: 90%;
       max-width: 700px;
-      margin-top: 40px;
+      margin-top: 50px;
       padding: 30px;
       border-radius: 12px;
       box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
     }
     h1 {
       text-align: center;
+      margin-bottom: 20px;
       color: #333;
     }
     #chat-box {
-      max-height: 500px;
+      max-height: 600px;
       overflow-y: auto;
       margin-bottom: 20px;
       padding: 10px;
@@ -48,7 +49,7 @@
       border-left: 4px solid #3399ff;
       border-radius: 5px;
     }
-    .acurai-fields {
+    .acurai-fields, .sources-block, .confidence-block {
       font-size: 13px;
       margin-bottom: 8px;
       padding: 10px;
@@ -56,12 +57,8 @@
       border-radius: 6px;
       border-left: 4px solid #87cefa;
     }
-    .acurai-fields p {
+    .acurai-fields p, .sources-block p, .confidence-block p {
       margin: 4px 0;
-    }
-    .sources {
-      font-size: 12px;
-      color: gray;
     }
     #chat-form {
       display: flex;
@@ -81,16 +78,20 @@
       border: none;
       border-radius: 8px;
       cursor: pointer;
+      transition: background 0.2s ease;
+    }
+    button:hover {
+      background-color: #0077dd;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <img src="/static/logo.png" alt="Logo" style="max-height: 60px; display: block; margin: 0 auto 10px;" />
+    <img src="/static/logo.png" alt="Logo" style="max-height: 60px; display: block; margin: 0 auto 10px;">
     <h1>Chat with X-Road Docs</h1>
     <div id="chat-box"></div>
     <form id="chat-form">
-      <input type="text" id="question" placeholder="Ask a question..." required />
+      <input type="text" id="question" placeholder="Ask a question..." required>
       <button type="submit">Ask</button>
     </form>
   </div>
@@ -101,36 +102,57 @@
 
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
-      const input = document.getElementById("question");
-      const question = input.value.trim();
+      const questionInput = document.getElementById("question");
+      const question = questionInput.value.trim();
       if (!question) return;
+
       chatBox.innerHTML += `<p class="question">❓ ${question}</p>`;
-      input.value = "";
+      questionInput.value = "";
 
       const res = await fetch("/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ question }),
       });
+
       const data = await res.json();
 
+      // 👇 Визуальный вывод AcuRAI-инструкции
       let acurai = "";
-      if (data.task || data.system || data.symptom || data.context || data.confidence) {
+      if (data.task || data.system || data.symptom || data.context) {
         acurai += `<div class="acurai-fields">`;
-        if (data.task) acurai += `<p>🎯 <strong>Task:</strong> ${data.task}</p>`;
-        if (data.system) acurai += `<p>🧩 <strong>System:</strong> ${data.system}</p>`;
-        if (data.symptom) acurai += `<p>🚨 <strong>Symptom:</strong> ${data.symptom}</p>`;
-        if (data.context) acurai += `<p>📄 <strong>Context:</strong> ${data.context}</p>`;
-        if (data.confidence) acurai += `<p>🤖 <strong>Confidence:</strong> ${data.confidence}</p>`;
+        if (data.task) acurai += `<p><strong>🎯 Task:</strong> ${data.task}</p>`;
+        if (data.system) acurai += `<p><strong>🧩 System:</strong> ${data.system}</p>`;
+        if (data.symptom) acurai += `<p><strong>🚨 Symptom:</strong> ${data.symptom}</p>`;
+        if (data.context) acurai += `<p><strong>📄 Context:</strong> ${data.context}</p>`;
         acurai += `</div>`;
       }
 
-      let sources = "";
-      if (data.sources && data.sources.length > 0) {
-        sources = `<div class="sources"><strong>Sources:</strong><br/>${data.sources.map(s => `📄 ${s}`).join("<br/>")}</div>`;
+      // 👇 Вывод оценки уверенности
+      let confidence = "";
+      if (data.confidence) {
+        confidence += `<div class="confidence-block"><p><strong>🔍 Confidence:</strong> ${data.confidence}</p></div>`;
       }
 
-      chatBox.innerHTML += `<div class="answer">${acurai}💬 ${data.answer}${sources}</div>`;
+      // 👇 Вывод источников
+      let sources = "";
+      if (data.sources && data.sources.length > 0) {
+        sources += `<div class="sources-block"><p><strong>📚 Sources:</strong></p><ul>`;
+        data.sources.forEach(src => {
+          sources += `<li>${src}</li>`;
+        });
+        sources += `</ul></div>`;
+      }
+
+      // 👇 Собираем ответ
+      chatBox.innerHTML += `
+        <div class="answer">
+          ${acurai}
+          ${confidence}
+          💬 ${data.answer}
+          ${sources}
+        </div>
+      `;
       chatBox.scrollTop = chatBox.scrollHeight;
     });
   </script>
