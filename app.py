@@ -18,38 +18,19 @@ class Question(BaseModel):
 async def chat_endpoint(q: Question):
     result = enhanced_query(q.question)
     answer = result.get("answer", "").strip()
-    task = result.get("task", "").strip()
 
     # fallback, если GPT ничего не понял
-    if not answer or answer.lower().startswith("i don't know") or (not task and "error" in answer.lower()):
+    if not answer or answer.lower().startswith("i don't know"):
         try:
             agent_answer = agent.run(q.question)
             return JSONResponse({
                 "answer": f"🛠️ {agent_answer}",
-                "task": "Function calling",
-                "system": "",
-                "symptom": "",
-                "context": "",
-                "confidence": "High",
-                "sources": []
             })
         except Exception as e:
             return JSONResponse({
                 "answer": f"⚠️ Tool failed: {str(e)}",
-                "task": "Function call failed",
-                "system": "",
-                "symptom": "",
-                "context": "",
-                "confidence": "Low",
-                "sources": []
             })
 
     return JSONResponse({
-        "answer": answer,
-        "task": task,
-        "system": result.get("system", ""),
-        "symptom": result.get("symptom", ""),
-        "context": result.get("context", ""),
-        "confidence": result.get("confidence", ""),
-        "sources": []  # скрыты от пользователя
+        "answer": answer
     })
