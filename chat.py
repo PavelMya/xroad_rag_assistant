@@ -1,7 +1,7 @@
 import os
 from dotenv import load_dotenv
-from langchain.chains.question_answering import load_qa_chain
 from langchain.chains import ConversationalRetrievalChain
+from langchain.chains.question_answering import load_qa_chain
 from langchain_community.vectorstores import FAISS
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from langchain.memory import ConversationBufferMemory
@@ -18,19 +18,24 @@ llm = ChatOpenAI(
     api_key=OPENAI_API_KEY
 )
 
-# Память чата — обязательно, иначе будет ошибка
+# Загрузка FAISS индекса
+vectorstore = FAISS.load_local(
+    folder_path="faiss_index",
+    embeddings=OpenAIEmbeddings(api_key=OPENAI_API_KEY),
+    allow_dangerous_deserialization=True
+)
+retriever = vectorstore.as_retriever()
+
+# Память чата
 memory = ConversationBufferMemory(
     memory_key="chat_history",
     return_messages=True,
-    output_key="answer"  # 🔥 ОБЯЗАТЕЛЬНО!
+    output_key="answer"
 )
 
 # Acurai prompt template
-retriever = vectorstore.as_retriever()
-
-
 acurai_prompt = PromptTemplate(
-    input_variables=["question", "context"],  # ВАЖНО: context включён!
+    input_variables=["question", "context"],
     template="""
 You are an expert assistant for system administrators working with X-Road documentation.
 Your task is to analyze technical problems, investigate causes, and give clear instructions.
@@ -57,29 +62,17 @@ Only show the ANSWER section in your response.
 """
 )
 
-# Загрузка FAISS индекса
-vectorstore = FAISS.load_local(
-    folder_path="faiss_index",
-    embeddings=OpenAIEmbeddings(api_key=OPENAI_API_KEY),
-    allow_dangerous_deserialization=True
-)
-
-llm_chain = load_qa_chain(
-    llm=llm,
-    chain_type="stuff",
-    prompt=acurai_prompt,
-    document_variable_name="context"  # 👈 обязательно!
-)
-# Цепочка с памятью и указанием output_key
+# Настройка цепочки для ответов
 qa_chain = ConversationalRetrievalChain.from_llm(
     llm=llm,
     retriever=retriever,
-    chain_type="stuff",
-    chain_type_kwargs={
-        "prompt": acurai_prompt,
-        "document_variable_name": "context"
-    },
     memory=memory,
+    combine_docs_chain=load_qa_chain(
+        llm=llm,
+        chain_type="stuff",
+        prompt=acurai_prompt,
+        document_variable_name="context"
+    ),
     return_source_documents=True
 )
 
@@ -87,12 +80,12 @@ qa_chain = ConversationalRetrievalChain.from_llm(
 def enhanced_query(query: str) -> dict:
     result = qa_chain.invoke({
         "question": query,
-        "chat_history": memory.chat_memory.messages  # 🧠 обязательно!
+        "chat_history": memory.chat_memory.messages
     })
     return {
         "answer": result["answer"],
         "source_documents": [
-            doc.metadata.get("source", "") for doc in result["source_documents"]
+            doc.metadata.get("source", "") for doc in result.get("source_documents", [])
         ],
         "chat_history": memory.chat_memory.messages
     }
