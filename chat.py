@@ -58,5 +58,23 @@ qa_chain = ConversationalRetrievalChain.from_llm(
 )
 
 # Обёртка для app.py
-def enhanced_query(user_question: str):
-    return qa_chain.invoke({"question": user_question})
+def enhanced_query(user_question: str) -> dict:
+    result = qa_chain.invoke({"question": user_question})
+    raw = result.get("answer", "").strip()
+
+    try:
+        # Попробуем извлечь JSON из строки
+        parsed = json.loads(raw)
+        parsed["source_documents"] = result.get("source_documents", [])
+        return parsed
+    except Exception:
+        # Если не JSON — fallback к обычному тексту
+        return {
+            "task": "",
+            "system": "",
+            "symptom": "",
+            "context": "",
+            "answer": raw,
+            "confidence": "Low",
+            "source_documents": result.get("source_documents", [])
+        }
