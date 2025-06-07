@@ -52,10 +52,8 @@ qa_chain = ConversationalRetrievalChain.from_llm(
     retriever=vectorstore.as_retriever(search_kwargs={"k": 5}),
     memory=memory,
     return_source_documents=True,
-    combine_docs_chain_kwargs={
-        "prompt": acurai_prompt,
-        "document_variable_name": "context"  # <--- вот эта строка фиксит всё!
-    },
+    combine_docs_chain_kwargs={"prompt": acurai_prompt},
+    output_key="answer",  # <-- ДОБАВЬ ЭТУ СТРОКУ!
     verbose=True
 )
 
