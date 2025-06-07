@@ -21,18 +21,19 @@ llm = ChatOpenAI(
 # Шаблон AcuRAI без переменной {context}
 
 acurai_prompt = PromptTemplate(
-    input_variables=["question"],
+    input_variables=["question", "context"],
     template="""
 You are a senior assistant for system administrators using X-Road.
 
 Your job is to deeply analyze the user's technical problem and give a complete, precise and practical answer.
 
-Always reason through the following steps (internally), but show only the final ANSWER:
+Always reason through the following steps (internally), but show only the final ANSWER.
 
 ---
 QUESTION: {question}
 TASK: What does the user want to achieve?
 SYMPTOM: What is going wrong?
+CONTEXT: {context}
 ---
 
 ANSWER: 
