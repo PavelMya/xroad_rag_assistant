@@ -33,7 +33,8 @@ Follow the structured reasoning steps below, but output ONLY the final ANSWER to
 QUESTION: {question}
 TASK: Determine what the user is trying to achieve.
 SYMPTOM: Identify any implicit or explicit problem.
-CONTEXT: Use the relevant documentation from the retrieved content.
+CONTEXT: Use the relevant documentation provided below:
+{context}
 ANSWER: Provide a clear, helpful, and technical answer.
 Only return the ANSWER section in your response.
 """)
