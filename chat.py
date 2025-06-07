@@ -30,7 +30,6 @@ Always reason through the following steps (internally), but show only the final 
 QUESTION: {question}
 TASK: What does the user want to achieve?
 SYMPTOM: What is going wrong?
-CONTEXT: Use retrieved documentation and common misconfigurations.
 ---
 
 ANSWER: 
