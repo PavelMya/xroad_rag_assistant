@@ -1,30 +1,54 @@
 import os
 from dotenv import load_dotenv
+from langchain.prompts import PromptTemplate
+from langchain.memory import ConversationBufferMemory
+from langchain.chains.question_answering import load_qa_chain
+from langchain.chains import create_history_aware_retriever, create_retrieval_chain
 from langchain_community.vectorstores import FAISS
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
-from langchain.memory import ConversationBufferMemory
-from langchain.prompts import PromptTemplate
-from langchain.chains.combine_documents import create_stuff_documents_chain
-from langchain.chains import create_history_aware_retriever, create_retrieval_chain
 
-# Загрузка переменных окружения
+# Load environment variables
 load_dotenv()
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
-# LLM
+# Initialize the language model
 llm = ChatOpenAI(
     model="gpt-4o",
     temperature=0.2,
     api_key=OPENAI_API_KEY
 )
 
-# Память чата
-memory = ConversationBufferMemory(
-    memory_key="chat_history",
-    return_messages=True
+# Load FAISS index
+vectorstore = FAISS.load_local(
+    folder_path="faiss_index",
+    embeddings=OpenAIEmbeddings(api_key=OPENAI_API_KEY),
+    allow_dangerous_deserialization=True
 )
 
-# Шаблон Prompt
+# Memory
+memory = ConversationBufferMemory(
+    return_messages=True,
+    memory_key="chat_history",
+    output_key="answer"
+)
+
+# Prompt for history-aware retriever
+history_prompt = PromptTemplate(
+    input_variables=["chat_history", "input"],
+    template="""
+You are a helpful assistant for X-Road system administrators.
+Use the following conversation history and the new question to form a better search query.
+
+Chat History:
+{chat_history}
+
+New Question:
+{input}
+
+Rewritten Search Query:"""
+)
+
+# Prompt for final answer generation
 acurai_prompt = PromptTemplate(
     input_variables=["question", "context"],
     template="""
@@ -37,7 +61,7 @@ QUESTION: {question}
 TASK: Determine what the user is trying to achieve.
 SYMPTOM: Identify any problem or unclear behavior.
 CONTEXT: {context}
-ANSWER:
+ANSWER: 
 Respond with a clear, structured and helpful answer that includes:
 
 - What the user is trying to do.
@@ -53,35 +77,30 @@ Only show the ANSWER section in your response.
 """
 )
 
-# FAISS retriever
-vectorstore = FAISS.load_local(
-    folder_path="faiss_index",
-    embeddings=OpenAIEmbeddings(api_key=OPENAI_API_KEY),
-    allow_dangerous_deserialization=True
-)
-retriever = vectorstore.as_retriever()
-
-# Исторически-осведомлённый retriever
+# Create retriever with history-awareness
 retriever_with_memory = create_history_aware_retriever(
     llm=llm,
-    retriever=retriever,
-    prompt=acurai_prompt
+    retriever=vectorstore.as_retriever(),
+    prompt=history_prompt
 )
 
-# Chain для генерации ответа
-document_chain = create_stuff_documents_chain(
-    llm=llm,
-    prompt=acurai_prompt
-)
+# Create final retrieval chain
 qa_chain = create_retrieval_chain(
     retriever=retriever_with_memory,
-    combine_docs_chain=llm_chain  # это из load_qa_chain(...)
+    combine_docs_chain=load_qa_chain(
+        llm=llm,
+        chain_type="stuff",
+        prompt=acurai_prompt,
+        document_variable_name="context"
+    ),
+    memory=memory
 )
 
-# Функция запроса
+# Function to run query
+
 def enhanced_query(query: str) -> dict:
     result = qa_chain.invoke({
-        "question": query,
+        "input": query,
         "chat_history": memory.chat_memory.messages
     })
     return {
@@ -92,7 +111,7 @@ def enhanced_query(query: str) -> dict:
         "chat_history": memory.chat_memory.messages
     }
 
-# CLI
+# CLI for local testing
 if __name__ == "__main__":
     while True:
         user_input = input("Вы: ")
