@@ -55,7 +55,7 @@ prompt = ChatPromptTemplate.from_messages([
     "Your goal is to identify the user's intent and provide precise, technical answers based on documentation.\n\n"
     "You must extract and reason about these fields from the question:\n"
     "- task\n- system\n- symptom\n- context\n\n"
-put in a JSON bl    "Return a clear, helpful explanation in plain language in the 'answer' field. Do NOT wrap the entire outock. Only return plain JSON as a Python dictionary behind-the-scenes.\n"
+    "Return a clear, helpful explanation in plain language in the 'answer' field. Do NOT wrap the entire output in a JSON block. Only return plain JSON as a Python dictionary behind-the-scenes.\n"
     "Use examples, logs, commands, or config snippets when possible.\n"
     "If question is unclear — ask for clarification.\n"
     "If issue is outside X-Road (e.g. Linux/system errors) — state it and offer limited help.\n"
