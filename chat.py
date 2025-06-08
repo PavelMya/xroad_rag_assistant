@@ -1,6 +1,6 @@
 import os
 from dotenv import load_dotenv
-
+from langchain_core.runnables import Runnable
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.messages import SystemMessage
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
@@ -86,11 +86,13 @@ retriever = create_history_aware_retriever(
     prompt=acurai_prompt
 )
 
+
+combine_chain = acurai_prompt | llm
+
 # --- Цепочка для AcuRAI ответа ---
 acurai_chain = create_retrieval_chain(
     retriever=retriever,
-    llm=llm,
-    prompt=acurai_prompt
+    combine_docs_chain=combine_chain
 )
 
 # --- Цепочка для обычного разговора ---
