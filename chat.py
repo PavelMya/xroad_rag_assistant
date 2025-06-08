@@ -1,28 +1,40 @@
 import os
 from dotenv import load_dotenv
 
-from langchain.chains import ConversationalRetrievalChain
-from langchain_community.vectorstores import FAISS
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+from langchain_core.messages import SystemMessage
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
+from langchain_community.vectorstores import FAISS
 from langchain.memory import ConversationBufferMemory
-from langchain.prompts import PromptTemplate
+from langchain.chains import create_history_aware_retriever, create_retrieval_chain
 
-# Загрузка переменных окружения
+# Загрузка переменных среды
 load_dotenv()
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
-# Настройка модели
+# Инициализация LLM
 llm = ChatOpenAI(
     model="gpt-4o",
     temperature=0.2,
     api_key=OPENAI_API_KEY
 )
 
-# Шаблон AcuRAI без переменной {context}
+# Векторное хранилище FAISS
+vectorstore = FAISS.load_local(
+    folder_path="faiss_index",
+    embeddings=OpenAIEmbeddings(api_key=OPENAI_API_KEY),
+    allow_dangerous_deserialization=True
+)
 
-acurai_prompt = PromptTemplate(
-    input_variables=["question", "context"],
-    template="""
+# Память чата
+memory = ConversationBufferMemory(
+    return_messages=True,
+    memory_key="chat_history"
+)
+
+# --- SYSTEM PROMPT для AcuRAI ---
+acurai_system = SystemMessage(
+    content="""
 You are a senior assistant for system administrators using X-Road.
 
 Your job is to deeply analyze the user's technical problem and give a complete, precise and practical answer.
@@ -30,95 +42,102 @@ Your job is to deeply analyze the user's technical problem and give a complete, 
 Always reason through the following steps (internally), but show only the final ANSWER.
 
 ---
-QUESTION: {question}
-TASK: What does the user want to achieve?
-SYMPTOM: What is going wrong?
-CONTEXT: {context}
----
-
 ANSWER:
-Respond as if you were helping a DevOps engineer in production.
-
-Always include:
-
 ✅ What the user is trying to do
-
 🔍 Possible root causes (numbered list)
-
 🔧 Steps to investigate:
 - With **commands**, **paths**, **logs**
 - What to look for (e.g., errors, confirmation lines)
-
 📄 Example config snippets (if applicable)
-
 📂 Exact file locations and required permissions
-
 📘 Source documentation references (with filenames or markdown anchors)
-
----
-
 🧪 Can the issue be verified via CLI or UI?
-- Say **what to do** in command line
-- Say **what to click** in UI
-
 🪵 What logs to check?
-- Which **log files**
-- What to **search for**
-
 ⚠️ Are there tricky or common mistakes?
-- What users **frequently miss or misconfigure**
-
----
 
 Style:
 - Use markdown formatting (headers, code blocks, bullet points)
 - Use emoji bullets for clarity
 - Avoid vague phrases — be concrete
 
-Only show the final ANSWER section in your response.
+Only output the ANSWER section. Do not show your reasoning process.
 """
 )
 
-# Память чата
-memory = ConversationBufferMemory(
-    memory_key="chat_history",
-    return_messages=True,
-    output_key="answer"
-)
+# --- PROMPT для AcuRAI режима ---
+acurai_prompt = ChatPromptTemplate.from_messages([
+    acurai_system,
+    MessagesPlaceholder("chat_history"),
+    ("human", "{input}"),
+    MessagesPlaceholder("context")
+])
 
-# Векторная база FAISS
-vectorstore = FAISS.load_local(
-    folder_path="faiss_index",
-    embeddings=OpenAIEmbeddings(api_key=OPENAI_API_KEY),
-    allow_dangerous_deserialization=True
-)
+# --- PROMPT для дружелюбного режима ---
+friendly_prompt = ChatPromptTemplate.from_messages([
+    SystemMessage(content="Ты — дружелюбный помощник. Отвечай просто, естественно и вежливо."),
+    MessagesPlaceholder("chat_history"),
+    ("human", "{input}")
+])
 
-# Цепочка вопрос-ответ
-qa_chain = ConversationalRetrievalChain.from_llm(
+# --- Исторически-осознанный retriever ---
+retriever = create_history_aware_retriever(
     llm=llm,
     retriever=vectorstore.as_retriever(search_kwargs={"k": 5}),
-    memory=memory,
-    return_source_documents=True,
-    combine_docs_chain_kwargs={"prompt": acurai_prompt},
-    output_key="answer",
-    verbose=True
+    prompt=acurai_prompt
 )
 
-# Обработка запроса
-def enhanced_query(query: str) -> dict:
-    result = qa_chain.invoke({
-        "question": query,
-        "chat_history": memory.chat_memory.messages
-    })
-    return {
-        "answer": result["answer"],
-        "source_documents": [
-            doc.metadata.get("source", "") for doc in result["source_documents"]
-        ],
-        "chat_history": memory.chat_memory.messages
-    }
+# --- Цепочка для AcuRAI ответа ---
+acurai_chain = create_retrieval_chain(
+    retriever=retriever,
+    llm=llm,
+    prompt=acurai_prompt
+)
 
-# Локальный запуск
+# --- Цепочка для обычного разговора ---
+def friendly_chain(user_input, chat_history):
+    response = llm.invoke([
+        SystemMessage(content="Ты — дружелюбный помощник."),
+        *chat_history,
+        ("human", user_input)
+    ])
+    return response.content
+
+# --- Классификация вопроса с помощью LLM ---
+def is_technical_llm(question: str) -> bool:
+    classification_prompt = [
+        SystemMessage(content="You are a classifier. Your job is to decide if a question is technical."),
+        ("human", f"""
+Question: "{question}"
+
+Is it a technical question about Linux, X-Road, DevOps, APIs, infrastructure or system administration?
+
+Reply only with YES or NO.
+""")
+    ]
+    result = llm.invoke(classification_prompt)
+    return "yes" in result.content.strip().lower()
+
+# --- Обработка пользовательского запроса ---
+def enhanced_query(query: str) -> dict:
+    if is_technical_llm(query):
+        result = acurai_chain.invoke({
+            "input": query,
+            "chat_history": memory.chat_memory.messages
+        })
+        memory.chat_memory.add_user_message(query)
+        memory.chat_memory.add_ai_message(result["answer"])
+        return {
+            "answer": result["answer"]
+        }
+    else:
+        answer = friendly_chain(query, memory.chat_memory.messages)
+        memory.chat_memory.add_user_message(query)
+        memory.chat_memory.add_ai_message(answer)
+        return {
+            "answer": answer
+        }
+
+# --- Локальный запуск через консоль ---
 if __name__ == "__main__":
     while True:
         user_input = input("Вы: ")
