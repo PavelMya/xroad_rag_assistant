@@ -122,10 +122,11 @@ def enhanced_query(query: str) -> dict:
             "input": query,
             "chat_history": memory.chat_memory.messages
         })
+        answer_text = str(result["answer"])  # <-- Исправление
         memory.chat_memory.add_user_message(query)
-        memory.chat_memory.add_ai_message(result["answer"])
+        memory.chat_memory.add_ai_message(answer_text)
         return {
-            "answer": result["answer"]
+            "answer": answer_text
         }
     else:
         answer = friendly_chain(query, memory.chat_memory.messages)
@@ -134,7 +135,6 @@ def enhanced_query(query: str) -> dict:
         return {
             "answer": answer
         }
-
 # --- Локальный запуск через консоль ---
 if __name__ == "__main__":
     while True:
