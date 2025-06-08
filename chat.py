@@ -84,11 +84,11 @@ retriever = create_history_aware_retriever(
     prompt=acurai_prompt
 )
 
-# --- Цепочка для AcuRAI ответа ---
+combine_chain = acurai_prompt | llm
+
 acurai_chain = create_retrieval_chain(
     retriever=retriever,
-    llm=llm,
-    prompt=acurai_prompt
+    combine_docs_chain=combine_chain
 )
 
 # --- Цепочка для обычного разговора ---
