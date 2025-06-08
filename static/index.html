@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>GPT-4o X-Road Assistant</title>
-  <link rel="icon" href="logo.png">
+  <link rel="icon" href="logo.png" />
   <style>
     body {
       margin: 0;
@@ -46,7 +46,9 @@
     .message {
       max-width: 80%;
       margin-bottom: 1rem;
-      line-height: 1.5;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      word-break: break-word;
     }
 
     .user-message {
@@ -64,6 +66,26 @@
       padding: 1rem;
       border-radius: 12px 12px 12px 0;
       color: #000;
+    }
+
+    .bot-message h1,
+    .bot-message h2,
+    .bot-message h3 {
+      margin-top: 1em;
+    }
+
+    .bot-message code {
+      background: #eee;
+      padding: 2px 4px;
+      border-radius: 4px;
+    }
+
+    .bot-message pre {
+      background: #f8f8f8;
+      padding: 1em;
+      overflow-x: auto;
+      border-radius: 6px;
+      border: 1px solid #ddd;
     }
 
     .sources {
@@ -102,10 +124,11 @@
       background-color: #0056b3;
     }
   </style>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
 <body>
   <header>
-    <img src="logo.png" alt="Logo">
+    <img src="logo.png" alt="Logo" />
     <h1>GPT-4o X-Road Assistant</h1>
   </header>
 
@@ -132,27 +155,30 @@
 
       chatBox.innerHTML += `<div class="message user-message">${question}</div>`;
       chatBox.scrollTop = chatBox.scrollHeight;
-
       input.value = "";
 
-      const response = await fetch("/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question })
-      });
+      try {
+        const response = await fetch("/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ question })
+        });
 
-      const data = await response.json();
+        const data = await response.json();
 
-      const sources = data.sources?.length
-        ? `<div class="sources">Sources: ${data.sources.join(", ")}</div>`
-        : "";
+        const sources = data.source_documents?.length
+          ? `<div class="sources">Sources: ${data.source_documents.join(", ")}</div>`
+          : "";
 
-      chatBox.innerHTML += `
-        <div class="message bot-message">
-          ${data.answer}
-          ${sources}
-        </div>
-      `;
+        chatBox.innerHTML += `
+          <div class="message bot-message">
+            ${marked.parse(data.answer || "No response")}
+            ${sources}
+          </div>
+        `;
+      } catch (err) {
+        chatBox.innerHTML += `<div class="message bot-message">⚠️ Error fetching answer.</div>`;
+      }
 
       chatBox.scrollTop = chatBox.scrollHeight;
     }

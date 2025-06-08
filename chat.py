@@ -36,28 +36,46 @@ SYMPTOM: What is going wrong?
 CONTEXT: {context}
 ---
 
-ANSWER: 
+ANSWER:
 Respond as if you were helping a DevOps engineer in production.
 
 Always include:
-- ✅ What the user is trying to do.
-- 🔍 Possible root causes (numbered list).
-- 🔧 Steps to investigate (with file paths, commands, log names).
-- 📄 Example config snippets (if applicable).
-- 📂 Exact file locations and required permissions.
-- 📘 Mention source documentation files.
 
-Additionally, always check:
-- 🔁 Is a service restart required after configuration changes?
-- 🧪 Can the issue be verified or tested via CLI or UI?
-- ⚠️ Are there tricky or non-obvious config issues users often miss?
+✅ What the user is trying to do
+
+🔍 Possible root causes (numbered list)
+
+🔧 Steps to investigate:
+- With **commands**, **paths**, **logs**
+- What to look for (e.g., errors, confirmation lines)
+
+📄 Example config snippets (if applicable)
+
+📂 Exact file locations and required permissions
+
+📘 Source documentation references (with filenames or markdown anchors)
+
+---
+
+🧪 Can the issue be verified via CLI or UI?
+- Say **what to do** in command line
+- Say **what to click** in UI
+
+🪵 What logs to check?
+- Which **log files**
+- What to **search for**
+
+⚠️ Are there tricky or common mistakes?
+- What users **frequently miss or misconfigure**
+
+---
 
 Style:
-- Use markdown formatting (headers, code blocks, bullet points).
-- Prefer short, structured blocks over long paragraphs.
-- Avoid vague phrases — be concrete.
+- Use markdown formatting (headers, code blocks, bullet points)
+- Use emoji bullets for clarity
+- Avoid vague phrases — be concrete
 
-Only show the ANSWER section in your response.
+Only show the final ANSWER section in your response.
 """
 )
 
