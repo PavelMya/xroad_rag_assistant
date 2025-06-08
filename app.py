@@ -41,7 +41,7 @@ async def chat_endpoint(request: QueryRequest):
     response = enhanced_query(request.question)
     return {
         "answer": response["answer"],
-        "sources": response["source_documents"],
+        "sources": []
     }
 
 # Локальный запуск
