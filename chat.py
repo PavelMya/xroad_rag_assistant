@@ -1,6 +1,5 @@
 import os
 from dotenv import load_dotenv
-from langchain_core.runnables import Runnable
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.messages import SystemMessage
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
@@ -64,12 +63,11 @@ Only output the ANSWER section. Do not show your reasoning process.
 """
 )
 
-# --- PROMPT для AcuRAI режима ---
+# --- PROMPT для AcuRAI режима (без context!) ---
 acurai_prompt = ChatPromptTemplate.from_messages([
     acurai_system,
     MessagesPlaceholder("chat_history"),
-    ("human", "{input}"),
-    MessagesPlaceholder("context")
+    ("human", "{input}")
 ])
 
 # --- PROMPT для дружелюбного режима ---
@@ -86,13 +84,11 @@ retriever = create_history_aware_retriever(
     prompt=acurai_prompt
 )
 
-
-combine_chain = acurai_prompt | llm
-
 # --- Цепочка для AcuRAI ответа ---
 acurai_chain = create_retrieval_chain(
     retriever=retriever,
-    combine_docs_chain=combine_chain
+    llm=llm,
+    prompt=acurai_prompt
 )
 
 # --- Цепочка для обычного разговора ---
@@ -122,18 +118,10 @@ Reply only with YES or NO.
 # --- Обработка пользовательского запроса ---
 def enhanced_query(query: str) -> dict:
     if is_technical_llm(query):
-        # получаем контекст
-        retrieved_docs = retriever.invoke({
+        result = acurai_chain.invoke({
             "input": query,
             "chat_history": memory.chat_memory.messages
         })
-
-        result = acurai_chain.invoke({
-            "input": query,
-            "chat_history": memory.chat_memory.messages,
-            "context": retrieved_docs  # <--- передаём context!
-        })
-
         memory.chat_memory.add_user_message(query)
         memory.chat_memory.add_ai_message(result["answer"])
         return {
@@ -146,7 +134,6 @@ def enhanced_query(query: str) -> dict:
         return {
             "answer": answer
         }
-
 
 # --- Локальный запуск через консоль ---
 if __name__ == "__main__":
