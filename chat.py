@@ -122,7 +122,7 @@ def enhanced_query(query: str) -> dict:
             "input": query,
             "chat_history": memory.chat_memory.messages
         })
-        answer_text = str(result["answer"])  # <-- Исправление
+        answer_text = result["answer"].content if hasattr(result["answer"], "content") else str(result["answer"])
         memory.chat_memory.add_user_message(query)
         memory.chat_memory.add_ai_message(answer_text)
         return {
