@@ -122,10 +122,18 @@ Reply only with YES or NO.
 # --- Обработка пользовательского запроса ---
 def enhanced_query(query: str) -> dict:
     if is_technical_llm(query):
-        result = acurai_chain.invoke({
+        # получаем контекст
+        retrieved_docs = retriever.invoke({
             "input": query,
             "chat_history": memory.chat_memory.messages
         })
+
+        result = acurai_chain.invoke({
+            "input": query,
+            "chat_history": memory.chat_memory.messages,
+            "context": retrieved_docs  # <--- передаём context!
+        })
+
         memory.chat_memory.add_user_message(query)
         memory.chat_memory.add_ai_message(result["answer"])
         return {
@@ -138,6 +146,7 @@ def enhanced_query(query: str) -> dict:
         return {
             "answer": answer
         }
+
 
 # --- Локальный запуск через консоль ---
 if __name__ == "__main__":
