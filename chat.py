@@ -124,9 +124,7 @@ Important:
 - Do NOT allow the assistant to "improvise" or pretend to know something.
 - It’s acceptable to say "I don’t know" or "This depends on your specific setup".
 
-Language:
-- Always continue in the same language as the user's question and the assistant’s original answer.
-- Never switch to English unless the original question is in English.
+You must protect the assistant from giving misleading or off-topic answers.
 """
 )
 
@@ -161,18 +159,15 @@ def friendly_chain(user_input, chat_history):
     return response.content
 
 # === Reviewer step: filters speculative or absurd responses ===
-def filter_answer_with_reviewer(question: str, answer_text: str) -> str:
+def filter_answer_with_reviewer(answer_text: str) -> str:
     review = reviewer_llm.invoke([
         reviewer_prompt,
         ("human", f"""
-User question:
-\"\"\"{question}\"\"\"
+Review the following answer:
 
-Assistant's answer:
 \"\"\"{answer_text}\"\"\"
 
-Please review the response in context of the question.
-Apply all the rules and rewrite the answer if necessary.
+Apply all rules and rewrite it if necessary.
 """)
     ])
     return review.content.strip()
@@ -204,7 +199,7 @@ def enhanced_query(query: str) -> dict:
         answer_text = friendly_chain(query, memory.chat_memory.messages)
 
     # Review the answer for accuracy and relevance
-    final_answer = filter_answer_with_reviewer(query, answer_text)
+    final_answer = filter_answer_with_reviewer(answer_text)
 
     # Save to memory
     memory.chat_memory.add_user_message(query)
