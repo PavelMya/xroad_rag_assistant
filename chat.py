@@ -6,6 +6,7 @@ from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from langchain_community.vectorstores import FAISS
 from langchain.memory import ConversationBufferMemory
 from langchain.chains import create_history_aware_retriever, create_retrieval_chain
+from reviewer import review_answer
 
 # Load environment variables
 load_dotenv()
@@ -133,24 +134,26 @@ Reply only with YES or NO.
 
 # --- Handles user query based on classification ---
 def enhanced_query(query: str) -> dict:
+    # 1. Получаем сырой ответ от основной модели (GPT)
     if is_technical_llm(query):
         result = acurai_chain.invoke({
             "input": query,
             "chat_history": memory.chat_memory.messages
         })
-        answer_text = result["answer"].content if hasattr(result["answer"], "content") else str(result["answer"])
-        memory.chat_memory.add_user_message(query)
-        memory.chat_memory.add_ai_message(answer_text)
-        return {
-            "answer": answer_text
-        }
+        raw_answer = result["answer"].content if hasattr(result["answer"], "content") else str(result["answer"])
     else:
-        answer = friendly_chain(query, memory.chat_memory.messages)
-        memory.chat_memory.add_user_message(query)
-        memory.chat_memory.add_ai_message(answer)
-        return {
-            "answer": answer
-        }
+        raw_answer = friendly_chain(query, memory.chat_memory.messages)
+
+    # 2. Пропускаем ответ через reviewer (GPT 4o без temperature)
+    reviewed_answer = review_answer(raw_answer)
+
+    # 3. Сохраняем в историю и возвращаем
+    memory.chat_memory.add_user_message(query)
+    memory.chat_memory.add_ai_message(reviewed_answer)
+
+    return {
+        "answer": reviewed_answer
+    }
 
 # --- Run locally in console ---
 if __name__ == "__main__":
