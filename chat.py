@@ -159,15 +159,18 @@ def friendly_chain(user_input, chat_history):
     return response.content
 
 # === Reviewer step: filters speculative or absurd responses ===
-def filter_answer_with_reviewer(answer_text: str) -> str:
+def filter_answer_with_reviewer(question: str, answer_text: str) -> str:
     review = reviewer_llm.invoke([
         reviewer_prompt,
         ("human", f"""
-Review the following answer:
+User question:
+\"\"\"{question}\"\"\"
 
+Assistant's answer:
 \"\"\"{answer_text}\"\"\"
 
-Apply all rules and rewrite it if necessary.
+Please review the response in context of the question.
+Apply all the rules and rewrite the answer if necessary.
 """)
     ])
     return review.content.strip()
@@ -199,7 +202,7 @@ def enhanced_query(query: str) -> dict:
         answer_text = friendly_chain(query, memory.chat_memory.messages)
 
     # Review the answer for accuracy and relevance
-    final_answer = filter_answer_with_reviewer(answer_text)
+    final_answer = filter_answer_with_reviewer(query, answer_text)
 
     # Save to memory
     memory.chat_memory.add_user_message(query)
