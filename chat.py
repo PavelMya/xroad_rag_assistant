@@ -124,7 +124,9 @@ Important:
 - Do NOT allow the assistant to "improvise" or pretend to know something.
 - It’s acceptable to say "I don’t know" or "This depends on your specific setup".
 
-You must protect the assistant from giving misleading or off-topic answers.
+Language:
+- Always respond in the same language as the user's question.
+- Do NOT switch to English unless the user used English.
 """
 )
 
