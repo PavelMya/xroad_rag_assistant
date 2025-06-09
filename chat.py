@@ -11,10 +11,17 @@ from langchain.chains import create_history_aware_retriever, create_retrieval_ch
 load_dotenv()
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
-# Initialize the OpenAI model
+# === MODEL 1: Main GPT model for answering ===
 llm = ChatOpenAI(
     model="gpt-4o",
     temperature=0.2,
+    api_key=OPENAI_API_KEY
+)
+
+# === MODEL 2: Reviewer GPT model ===
+reviewer_llm = ChatOpenAI(
+    model="gpt-4o",
+    temperature=0,
     api_key=OPENAI_API_KEY
 )
 
@@ -25,13 +32,13 @@ vectorstore = FAISS.load_local(
     allow_dangerous_deserialization=True
 )
 
-# Initialize memory for chat history
+# Memory for chat history
 memory = ConversationBufferMemory(
     return_messages=True,
     memory_key="chat_history"
 )
 
-# --- AcuRAI SYSTEM PROMPT (for technical answers) ---
+# === AcuRAI SYSTEM PROMPT (for technical answers) ===
 acurai_system = SystemMessage(
     content="""
 You are a senior assistant for system administrators using X-Road.
@@ -63,7 +70,7 @@ Only output the ANSWER section. Do not show your reasoning process.
 """
 )
 
-# --- AcuRAI Persona (for friendly/non-technical responses) ---
+# === Persona prompt for friendly mode ===
 acurai_persona_instruction = SystemMessage(
     content="""
 You are an AI consultant specializing in X-Road and system administration.
@@ -85,14 +92,50 @@ Style:
 """
 )
 
-# --- AcuRAI Prompt (for retrieval mode) ---
+# === Reviewer prompt ===
+reviewer_prompt = SystemMessage(
+    content="""
+You are a response reviewer.
+
+Your task is to ensure that all assistant responses are:
+✅ factually accurate,
+✅ technically relevant,
+✅ honest,
+✅ and professionally written.
+
+You must review both:
+1. The assistant's final answer, and
+2. The original user question (implied context).
+
+Apply the following rules:
+
+1. ❌ If the assistant includes speculative or unverifiable content:
+    → Add at the end: **"⚠️ Please note: this part may be uncertain or incomplete."**
+
+2. ❌ If the user question appears nonsensical, absurd, or irrelevant to the assistant's scope (X-Road, system administration, infrastructure, Linux, DevOps):
+    → Replace the full response with:
+    "⚠️ Sorry, this question doesn't appear to be relevant. Please rephrase or ask something more specific."
+
+3. ✅ If the response is relevant and confident:
+    → Return it as-is.
+
+Important:
+- Do NOT attempt to answer irrelevant, absurd, or joke questions.
+- Do NOT allow the assistant to "improvise" or pretend to know something.
+- It’s acceptable to say "I don’t know" or "This depends on your specific setup".
+
+You must protect the assistant from giving misleading or off-topic answers.
+"""
+)
+
+# === AcuRAI retrieval prompt ===
 acurai_prompt = ChatPromptTemplate.from_messages([
     acurai_system,
     MessagesPlaceholder("chat_history"),
     ("human", "{input}")
 ])
 
-# --- Setup retriever with memory-awareness ---
+# === Retriever with memory ===
 retriever = create_history_aware_retriever(
     llm=llm,
     retriever=vectorstore.as_retriever(search_kwargs={"k": 5}),
@@ -101,13 +144,12 @@ retriever = create_history_aware_retriever(
 
 combine_chain = acurai_prompt | llm
 
-# --- Retrieval chain for technical questions ---
 acurai_chain = create_retrieval_chain(
     retriever=retriever,
     combine_docs_chain=combine_chain
 )
 
-# --- Friendly chain (used for non-technical questions) ---
+# === Friendly answer chain ===
 def friendly_chain(user_input, chat_history):
     response = llm.invoke([
         acurai_persona_instruction,
@@ -116,7 +158,21 @@ def friendly_chain(user_input, chat_history):
     ])
     return response.content
 
-# --- Classification function (detects if question is technical) ---
+# === Reviewer step: filters speculative or absurd responses ===
+def filter_answer_with_reviewer(answer_text: str) -> str:
+    review = reviewer_llm.invoke([
+        reviewer_prompt,
+        ("human", f"""
+Review the following answer:
+
+\"\"\"{answer_text}\"\"\"
+
+Apply all rules and rewrite it if necessary.
+""")
+    ])
+    return review.content.strip()
+
+# === Classification: is it a technical question? ===
 def is_technical_llm(question: str) -> bool:
     classification_prompt = [
         SystemMessage(content="You are a classifier. Your job is to decide if a question is technical."),
@@ -131,7 +187,7 @@ Reply only with YES or NO.
     result = llm.invoke(classification_prompt)
     return "yes" in result.content.strip().lower()
 
-# --- Handles user query based on classification ---
+# === Main query processing ===
 def enhanced_query(query: str) -> dict:
     if is_technical_llm(query):
         result = acurai_chain.invoke({
@@ -139,20 +195,21 @@ def enhanced_query(query: str) -> dict:
             "chat_history": memory.chat_memory.messages
         })
         answer_text = result["answer"].content if hasattr(result["answer"], "content") else str(result["answer"])
-        memory.chat_memory.add_user_message(query)
-        memory.chat_memory.add_ai_message(answer_text)
-        return {
-            "answer": answer_text
-        }
     else:
-        answer = friendly_chain(query, memory.chat_memory.messages)
-        memory.chat_memory.add_user_message(query)
-        memory.chat_memory.add_ai_message(answer)
-        return {
-            "answer": answer
-        }
+        answer_text = friendly_chain(query, memory.chat_memory.messages)
 
-# --- Run locally in console ---
+    # Review the answer for accuracy and relevance
+    final_answer = filter_answer_with_reviewer(answer_text)
+
+    # Save to memory
+    memory.chat_memory.add_user_message(query)
+    memory.chat_memory.add_ai_message(final_answer)
+
+    return {
+        "answer": final_answer
+    }
+
+# === CLI test mode ===
 if __name__ == "__main__":
     while True:
         user_input = input("You: ")
