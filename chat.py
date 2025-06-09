@@ -125,8 +125,8 @@ Important:
 - It’s acceptable to say "I don’t know" or "This depends on your specific setup".
 
 Language:
-- Always respond in the same language as the user's question.
-- Do NOT switch to English unless the user used English.
+- Always continue in the same language as the user's question and the assistant’s original answer.
+- Never switch to English unless the original question is in English.
 """
 )
 
