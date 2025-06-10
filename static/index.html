@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>GPT-4o X-Road Assistant</title>
-  <link rel="icon" href="logo.png" />
+  <link rel="icon" href="/static/logo.png" />
   <style>
     body {
       margin: 0;
@@ -149,16 +149,43 @@
     button:hover {
       background-color: #0056b3;
     }
+
+    #emailForm {
+      padding: 1rem 2rem;
+      background: #fff;
+    }
+
+    #emailForm input[type="email"] {
+      padding: 0.5rem;
+      font-size: 1rem;
+      width: 250px;
+      margin-left: 0.5rem;
+    }
+
+    #emailForm button {
+      margin-left: 0.5rem;
+      background-color: #28a745;
+    }
+
+    #emailForm button:hover {
+      background-color: #218838;
+    }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
 <body>
   <header>
-    <img src="logo.png" alt="Logo" />
+    <img src="/static/logo.png" alt="Logo" />
     <h1>GPT-4o X-Road Assistant</h1>
   </header>
 
   <div id="chat-box"></div>
+
+  <form id="emailForm" onsubmit="sendDBEmail(event)">
+    <label for="email">📥 Получить базу на email:</label>
+    <input type="email" id="email" placeholder="your@email.com" required />
+    <button type="submit">Send DB</button>
+  </form>
 
   <footer>
     <input type="text" id="question" placeholder="Ask your question..." autocomplete="off" />
@@ -247,6 +274,27 @@
       });
 
       submitBtn.innerText = "✅ Sent";
+    }
+
+    async function sendDBEmail(event) {
+      event.preventDefault();
+      const form = document.getElementById("emailForm");
+      const email = document.getElementById("email").value;
+
+      const formData = new FormData();
+      formData.append("email", email);
+
+      const btn = form.querySelector("button");
+      btn.disabled = true;
+      btn.innerText = "⏳ Sending...";
+
+      const res = await fetch("/send-db-email", {
+        method: "POST",
+        body: formData
+      });
+
+      const result = await res.json();
+      btn.innerText = result.status === "sent" ? "✅ Sent" : "❌ Error";
     }
   </script>
 </body>

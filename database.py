@@ -43,7 +43,7 @@ def save_interaction(question, answer_llm1, answer_llm2, session_id="unknown", c
     conn.commit()
     conn.close()
 
-    return question_id  # Вернём, чтобы отдать фронту
+    return question_id
 
 def mark_incorrect(question_id):
     conn = sqlite3.connect(DB_PATH)
@@ -62,3 +62,55 @@ def save_suggested_answer(question_id, text):
     """, (text, question_id))
     conn.commit()
     conn.close()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# from sqlalchemy import create_engine, Column, Integer, String, Boolean
+# from sqlalchemy.ext.declarative import declarative_base
+# from sqlalchemy.orm import sessionmaker
+# import os
+# from dotenv import load_dotenv
+
+
+# load_dotenv()
+
+# DATABASE_URL = os.getenv("DATABASE_URL")
+
+# engine = create_engine(DATABASE_URL)
+# SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+# Base = declarative_base()
+
+
+# class Interaction(Base):
+#     __tablename__ = "interactions"
+
+#     id = Column(Integer, primary_key=True, index=True)
+#     client_id = Column(Integer, default=0)
+#     session_id = Column(String)
+#     question_id = Column(String)
+#     question = Column(String)
+#     answer_gpt = Column(String)
+#     answer_reviewer = Column(String)
+#     is_incorrect = Column(Boolean, default=False)
+#     suggested_answer = Column(String, nullable=True)
