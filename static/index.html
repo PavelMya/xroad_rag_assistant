@@ -94,6 +94,32 @@
       color: #666;
     }
 
+    .feedback button {
+      margin-right: 0.5em;
+      margin-top: 0.5em;
+      background-color: #f0f0f0;
+      color: #333;
+      border: 1px solid #aaa;
+      padding: 0.4em 1em;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      cursor: pointer;
+    }
+
+    .feedback button:hover {
+      background-color: #ddd;
+    }
+
+    .suggest-box {
+      margin-top: 0.5em;
+    }
+
+    .suggest-box input {
+      padding: 0.5em;
+      width: 75%;
+      font-size: 0.9rem;
+    }
+
     footer {
       display: flex;
       padding: 1rem 2rem;
@@ -165,15 +191,20 @@
         });
 
         const data = await response.json();
-
-        const sources = data.source_documents?.length
-          ? `<div class="sources">Sources: ${data.source_documents.join(", ")}</div>`
-          : "";
+        const answerHTML = marked.parse(data.answer || "No response");
+        const questionId = data.question_id;
 
         chatBox.innerHTML += `
           <div class="message bot-message">
-            ${marked.parse(data.answer || "No response")}
-            ${sources}
+            ${answerHTML}
+            <div class="feedback">
+              <button onclick="sendIncorrect('${questionId}', this)">❌ Incorrect answer</button>
+              <button onclick="toggleSuggestInput(this)">💬 Suggest your own answer</button>
+              <div class="suggest-box" style="display: none;">
+                <input type="text" placeholder="Your suggestion...">
+                <button onclick="submitSuggestion(this, '${questionId}')">Submit</button>
+              </div>
+            </div>
           </div>
         `;
       } catch (err) {
@@ -181,6 +212,41 @@
       }
 
       chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    async function sendIncorrect(questionId, btn) {
+      btn.disabled = true;
+      await fetch("/feedback/incorrect", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question_id: questionId })
+      });
+      btn.innerText = "❌ Marked";
+    }
+
+    function toggleSuggestInput(button) {
+      const box = button.nextElementSibling;
+      box.style.display = box.style.display === "none" ? "block" : "none";
+    }
+
+    async function submitSuggestion(submitBtn, questionId) {
+      const input = submitBtn.previousElementSibling;
+      const text = input.value.trim();
+      if (!text) return;
+
+      input.disabled = true;
+      submitBtn.disabled = true;
+
+      await fetch("/feedback/suggest", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          question_id: questionId,
+          suggested_answer: text
+        })
+      });
+
+      submitBtn.innerText = "✅ Sent";
     }
   </script>
 </body>

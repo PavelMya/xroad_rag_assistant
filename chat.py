@@ -1,4 +1,5 @@
 import os
+import uuid
 from dotenv import load_dotenv
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.messages import SystemMessage
@@ -6,11 +7,16 @@ from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from langchain_community.vectorstores import FAISS
 from langchain.memory import ConversationBufferMemory
 from langchain.chains import create_history_aware_retriever, create_retrieval_chain
+
 from reviewer import review_answer
+from database import init_db, save_interaction  # 👈 База данных
 
 # Load environment variables
 load_dotenv()
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+
+# Init database
+init_db()
 
 # Initialize the OpenAI model
 llm = ChatOpenAI(
@@ -32,7 +38,7 @@ memory = ConversationBufferMemory(
     memory_key="chat_history"
 )
 
-# --- AcuRAI SYSTEM PROMPT (for technical answers) ---
+# --- AcuRAI SYSTEM PROMPT ---
 acurai_system = SystemMessage(
     content="""
 You are a senior assistant for system administrators using X-Road.
@@ -64,7 +70,7 @@ Only output the ANSWER section. Do not show your reasoning process.
 """
 )
 
-# --- AcuRAI Persona (for friendly/non-technical responses) ---
+# --- AcuRAI Persona ---
 acurai_persona_instruction = SystemMessage(
     content="""
 You are an AI consultant specializing in X-Road and system administration.
@@ -86,14 +92,14 @@ Style:
 """
 )
 
-# --- AcuRAI Prompt (for retrieval mode) ---
+# --- AcuRAI Prompt ---
 acurai_prompt = ChatPromptTemplate.from_messages([
     acurai_system,
     MessagesPlaceholder("chat_history"),
     ("human", "{input}")
 ])
 
-# --- Setup retriever with memory-awareness ---
+# --- Retriever ---
 retriever = create_history_aware_retriever(
     llm=llm,
     retriever=vectorstore.as_retriever(search_kwargs={"k": 5}),
@@ -102,13 +108,12 @@ retriever = create_history_aware_retriever(
 
 combine_chain = acurai_prompt | llm
 
-# --- Retrieval chain for technical questions ---
 acurai_chain = create_retrieval_chain(
     retriever=retriever,
     combine_docs_chain=combine_chain
 )
 
-# --- Friendly chain (used for non-technical questions) ---
+# --- Friendly chain ---
 def friendly_chain(user_input, chat_history):
     response = llm.invoke([
         acurai_persona_instruction,
@@ -117,7 +122,7 @@ def friendly_chain(user_input, chat_history):
     ])
     return response.content
 
-# --- Classification function (detects if question is technical) ---
+# --- Classification ---
 def is_technical_llm(question: str) -> bool:
     classification_prompt = [
         SystemMessage(content="You are a classifier. Your job is to decide if a question is technical."),
@@ -132,9 +137,9 @@ Reply only with YES or NO.
     result = llm.invoke(classification_prompt)
     return "yes" in result.content.strip().lower()
 
-# --- Handles user query based on classification ---
-def enhanced_query(query: str) -> dict:
-    # 1. Получаем сырой ответ от основной модели (GPT)
+# --- Enhanced query with DB + reviewer ---
+def enhanced_query(query: str, session_id="default", client_id="0") -> dict:
+    # 1. Answer from GPT
     if is_technical_llm(query):
         result = acurai_chain.invoke({
             "input": query,
@@ -144,22 +149,34 @@ def enhanced_query(query: str) -> dict:
     else:
         raw_answer = friendly_chain(query, memory.chat_memory.messages)
 
-    # 2. Пропускаем ответ через reviewer (GPT 4o без temperature)
+    # 2. Pass through reviewer
     reviewed_answer = review_answer(raw_answer)
 
-    # 3. Сохраняем в историю и возвращаем
+    # 3. Save to memory
     memory.chat_memory.add_user_message(query)
     memory.chat_memory.add_ai_message(reviewed_answer)
 
+    # 4. Save to DB and get question_id
+    question_id = save_interaction(
+        question=query,
+        answer_llm1=raw_answer,
+        answer_llm2=reviewed_answer,
+        session_id=session_id,
+        client_id=client_id
+    )
+
     return {
-        "answer": reviewed_answer
+        "answer": reviewed_answer,
+        "question_id": question_id
     }
 
-# --- Run locally in console ---
+# --- Console test (debug only) ---
 if __name__ == "__main__":
+    session_id = str(uuid.uuid4())  # simulate session
     while True:
         user_input = input("You: ")
         if user_input.lower() in ("exit", "quit"):
             break
-        response = enhanced_query(user_input)
+        response = enhanced_query(user_input, session_id=session_id)
         print("GPT:", response["answer"])
+        print("🧾 Question ID:", response["question_id"])
