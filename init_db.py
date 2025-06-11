@@ -1,8 +1,5 @@
-from database import Base, Interaction, DATABASE_URL
-from sqlalchemy import create_engine
+from database import init_db
 
-def init_db():
-    print("Создание таблиц в базе данных...")
-    engine = create_engine(DATABASE_URL)
-    Base.metadata.create_all(bind=engine)
-    print("✅ Таблицы успешно созданы.")
+print("Создание таблиц в базе данных...")
+init_db()
+print("✅ Таблицы успешно созданы.")
