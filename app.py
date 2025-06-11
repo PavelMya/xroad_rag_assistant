@@ -9,8 +9,8 @@ from pydantic import BaseModel
 import os
 
 from chat import enhanced_query
-from database import mark_incorrect, save_suggested_answer
-from database_models import Interaction, Base
+from database import mark_incorrect, save_suggested_answer, Interaction, Base
+
 
 # === FastAPI App ===
 app = FastAPI()
