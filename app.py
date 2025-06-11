@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request, Form
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -6,7 +6,6 @@ from pydantic import BaseModel
 from chat import enhanced_query
 from database import mark_incorrect, save_suggested_answer
 import os
-from email_utils import send_db_via_email
 
 
 app = FastAPI()
@@ -63,11 +62,6 @@ async def feedback_incorrect(feedback: IncorrectFeedback):
 async def feedback_suggest(feedback: SuggestFeedback):
     save_suggested_answer(feedback.question_id, feedback.suggested_answer)
     return {"status": "ok", "message": "Suggestion saved"}
-
-@app.post("/send-db-email")
-async def send_db_email(email: str = Form(...)):
-    success = await send_db_via_email(email)
-    return {"status": "sent" if success else "failed"}
 
 # --- DEV SERVER ---
 if __name__ == "__main__":
