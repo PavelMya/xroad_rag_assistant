@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Panel — Interactions</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 2rem;
+            background-color: #f7f9fc;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: #fff;
+        }
+        th, td {
+            padding: 0.8rem;
+            border: 1px solid #ccc;
+            text-align: left;
+            vertical-align: top;
+        }
+        th {
+            background-color: #eef2f7;
+        }
+        tr:nth-child(even) {
+            background-color: #f1f5f9;
+        }
+        .actions {
+            white-space: nowrap;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 0.5rem;
+        }
+        form {
+            display: inline-block;
+        }
+        button {
+            padding: 0.4rem 0.7rem;
+            margin-top: 0.3rem;
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>🛠️ Admin Panel — User Interactions</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Client ID</th>
+                <th>Session</th>
+                <th>Question</th>
+                <th>Answer (LLM1)</th>
+                <th>Answer (LLM2)</th>
+                <th>Incorrect?</th>
+                <th>Suggested Answer</th>
+                <th>Timestamp</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for interaction in interactions %}
+            <tr>
+                <td>{{ loop.index }}</td>
+                <td>{{ interaction.client_id }}</td>
+                <td>{{ interaction.session_id }}</td>
+                <td>{{ interaction.question }}</td>
+                <td>{{ interaction.answer_llm1 }}</td>
+                <td>{{ interaction.answer_llm2 }}</td>
+                <td>{{ '✅' if interaction.is_incorrect else '—' }}</td>
+                <td>{{ interaction.suggested_answer or '' }}</td>
+                <td>{{ interaction.timestamp }}</td>
+                <td class="actions">
+                    <form action="/admin/mark_incorrect" method="post">
+                        <input type="hidden" name="question_id" value="{{ interaction.question_id }}">
+                        <button type="submit">🚫 Mark Incorrect</button>
+                    </form>
+                    <form action="/admin/suggest_answer" method="post">
+                        <input type="hidden" name="question_id" value="{{ interaction.question_id }}">
+                        <input type="text" name="suggested_answer" placeholder="Suggest answer">
+                        <button type="submit">💡 Suggest</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>
