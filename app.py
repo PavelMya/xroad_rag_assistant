@@ -9,8 +9,9 @@ from pydantic import BaseModel
 import os
 
 from chat import enhanced_query
-from database import mark_incorrect, save_suggested_answer, Interaction, Base
+from database import mark_incorrect, save_suggested_answer, Interaction, Base, Session
 
+SessionLocal = Session
 
 # === FastAPI App ===
 app = FastAPI()
@@ -25,13 +26,7 @@ app.add_middleware(
 )
 
 # === DATABASE ===
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///interactions.db")
-engine = create_engine(
-    DATABASE_URL,
-    connect_args={"check_same_thread": False}
-    if DATABASE_URL.startswith("sqlite") else {}
-)
-SessionLocal = sessionmaker(bind=engine)
+SessionLocal = Session
 
 # === Static/Template ===
 app.mount("/static", StaticFiles(directory="static"), name="static")
