@@ -7,7 +7,7 @@ from sqlalchemy.orm import declarative_base, sessionmaker
 
 # 🔐 Строка подключения к PostgreSQL
 DATABASE_URL = (
-    "postgresql://chatgpt_user:XroadChatGPTInstance@chat-gpt.dev.roksnet.com:5432/chatgpt_db"
+    "postgresql://chatgpt_user:XroadChatGPTInstance@127.0.0.1:5432/chatgpt_db"
     "?options=-csearch_path=chatdata"
 )
 
