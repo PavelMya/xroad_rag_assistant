@@ -56,7 +56,12 @@ ANSWER:
 - What to look for (e.g., errors, confirmation lines)
 📄 Example config snippets (if applicable)
 📂 Exact file locations and required permissions
-📘 Source documentation references (with filenames or markdown anchors)
+📘 Source documentation references
+    If the answer is about X-Road, link to the corresponding official page on https://docs.x-road.global
+    – Never link to GitHub .md files or internal Markdown documents
+    – Prefer URLs like https://docs.x-road.global/security-server/ or https://docs.x-road.global/central-server/ based on topic
+    – Do not invent links. Only include real, existing URLs.
+    Always prefer clean, top-level URLs and do not reference GitHub or markdown files directly.
 🧪 Can the issue be verified via CLI or UI?
 🪵 What logs to check?
 ⚠️ Are there tricky or common mistakes?
