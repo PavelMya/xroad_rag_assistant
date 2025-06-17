@@ -1,10 +1,13 @@
-2025-06-07 02:23:52,539 - \u0417\u0430\u0433\u0440\u0443\u0436\u0435\u043d\u043e \u0444\u0430\u0439\u043b\u043e\u0432: 1290
-2025-06-07 02:23:52,697 - \u0420\u0430\u0437\u0431\u0438\u0442\u043e \u043d\u0430 \u0447\u0430\u043d\u043a\u0438: 3739
-2025-06-07 02:24:24,826 - HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
-2025-06-07 02:24:28,827 - HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
-2025-06-07 02:24:33,547 - HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
-2025-06-07 02:24:37,481 - HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
-2025-06-07 02:24:40,595 - Loading faiss.
-2025-06-07 02:24:48,950 - Successfully loaded faiss.
-2025-06-07 02:24:48,997 - Failed to load GPU Faiss: name 'GpuIndexIVFFlat' is not defined. Will not load constructor refs for GPU indexes. This is only an error if you're trying to use GPU Faiss.
-2025-06-07 02:24:49,920 - \u0418\u043d\u0434\u0435\u043a\u0441 \u0441\u043e\u0445\u0440\u0430\u043d\u0451\u043d \u0432: faiss_index
+2025-06-17 20:29:29,113 - \u0417\u0430\u0433\u0440\u0443\u0436\u0435\u043d\u043e \u0444\u0430\u0439\u043b\u043e\u0432: 1291
+2025-06-17 20:29:29,159 - \u0420\u0430\u0437\u0431\u0438\u0442\u043e \u043d\u0430 \u0447\u0430\u043d\u043a\u0438: 3744
+2025-06-17 20:29:35,226 - HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
+2025-06-17 20:29:39,988 - HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
+2025-06-17 20:29:43,840 - HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
+2025-06-17 20:29:48,937 - HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
+2025-06-17 20:29:50,974 - Loading faiss with AVX512 support.
+2025-06-17 20:29:50,974 - Could not load library with AVX512 support due to:
+ModuleNotFoundError("No module named 'faiss.swigfaiss_avx512'")
+2025-06-17 20:29:50,974 - Loading faiss with AVX2 support.
+2025-06-17 20:29:51,144 - Successfully loaded faiss with AVX2 support.
+2025-06-17 20:29:51,147 - Failed to load GPU Faiss: name 'GpuIndexIVFFlat' is not defined. Will not load constructor refs for GPU indexes. This is only an error if you're trying to use GPU Faiss.
+2025-06-17 20:29:51,321 - \u0418\u043d\u0434\u0435\u043a\u0441 \u0441\u043e\u0445\u0440\u0430\u043d\u0451\u043d \u0432: faiss_index
