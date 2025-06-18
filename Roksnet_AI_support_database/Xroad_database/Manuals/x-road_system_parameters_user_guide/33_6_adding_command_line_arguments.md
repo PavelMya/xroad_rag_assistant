@@ -1,0 +1,3 @@
+## 6 Adding command line arguments
+
+Sometimes you may need to provide command line arguments for Security Server, Central Server or Configuration Proxy, in order to override some parameters. For example if you wish to increase Java's maximum heap size, you can do it with the properties file `/etc/xroad/services/local.properties`. The file is also included in the backup archive file when taking a configuration backup of either Central Server or Security Server.

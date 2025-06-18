@@ -1,0 +1,10 @@
+### 3.8 Environmental monitoring add-on configuration parameters: `[env-monitor]`
+
+| **Parameter**                    | **Default value** | **Description**                                                                                                                                                  |
+|----------------------------------|-------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| port                             | 2552              | TCP port number used in communications with xroad-proxy and xroad-monitor components.                                                                            |
+| system-metrics-sensor-interval   | 5                 | Interval of systems metrics sensor in seconds. How often system metrics data is collected.                                                                       |
+| disk-space-sensor-interval       | 60                | Interval of disk space sensor in seconds. How often disk space data is collected.                                                                                |
+| exec-listing-sensor-interval     | 60                | Interval of exec listing sensor in seconds. How often sensor data using external command are collected.                                                          |
+| certificate-info-sensor-interval | 86400             | Interval of certificate information sensor in seconds. How often certificate data is collected. The first collection is always done after a delay of 10 seconds. |
+| limit-remote-data-set            | false             | On/Off switch for filtering out optional monitoring data. With flag set to true, only security server owner can request and get full data set.                   |

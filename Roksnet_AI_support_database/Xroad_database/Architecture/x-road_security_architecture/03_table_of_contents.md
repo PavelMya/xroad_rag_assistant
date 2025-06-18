@@ -1,0 +1,45 @@
+## Table of Contents
+
+
+
+- [X-Road Security Architecture](#x-road-security-architecture)
+  - [Version history](#version-history)
+  - [Table of Contents](#table-of-contents)
+  - [License](#license)
+  - [1 Introduction](#1-introduction)
+    - [1.1 Terms and Abbreviations](#11-terms-and-abbreviations)
+    - [1.2 References](#12-references)
+  - [2 Environment Assumptions](#2-environment-assumptions)
+  - [3 Confidentiality](#3-confidentiality)
+  - [4 Integrity](#4-integrity)
+  - [5 Availability](#5-availability)
+  - [6 Authentication](#6-authentication)
+  - [7 Access Control](#7-access-control)
+    - [7.1 Messaging Access Control](#71-messaging-access-control)
+    - [7.2 Web UI Access Control](#72-web-ui-access-control)
+    - [7.3 Minimum Supported Client Security Server Version](#73-minimum-supported-client-security-server-version)
+  - [8 Input Validation](#8-input-validation)
+    - [8.1 Web UI Input Validation](#81-web-ui-input-validation)
+    - [8.2 Messaging Validation](#82-messaging-validation)
+  - [9 Logging](#9-logging)
+  - [10 Time-Stamping](#10-time-stamping)
+  - [11 Updatability](#11-updatability)
+  - [12 Trust Federation](#12-trust-federation)
+  - [13 Standardised Protocols](#13-standardised-protocols)
+  - [14 Central Server](#14-central-server)
+  - [15 Security Server](#15-security-server)
+  - [16 Certificates and Keys Management](#16-certificates-and-keys-management)
+  - [17 Monitoring](#17-monitoring)
+    - [17.1 Environmental Monitoring](#171-environmental-monitoring)
+    - [17.2 Operational Monitoring](#172-operational-monitoring)
+    - [17.3 Controlling Access to Monitoring](#173-controlling-access-to-monitoring)
+  - [18 Privacy](#18-privacy)
+    - [18.1 Purpose Limitation](#181-purpose-limitation)
+    - [18.2 Data Minimisation](#182-data-minimisation)
+  - [19 Regulatory Compliance](#19-regulatory-compliance)
+    - [19.1 Common Regulations](#191-common-regulations)
+    - [19.2 Environment and Country-Specific Regulations](#192-environment-and-country-specific-regulations)
+
+## License
+
+This document is licensed under the Creative Commons Attribution-ShareAlike 3.0 Unported License. To view a copy of this license, visit http://creativecommons.org/licenses/by-sa/3.0/

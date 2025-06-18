@@ -1,0 +1,5 @@
+{
+  "source_url": "https://raw.githubusercontent.com/nordic-institute/X-Road/develop/doc/Manuals/ug-ss_x-road_6_security_server_user_guide.md",
+  "filename": "166_property_mac-key-base64-encoded_should_be_true_if_the_provided_mac-keys_are_encoded_in_base64.md",
+  "title": "Property mac-key-base64-encoded should be true if the provided mac-keys are encoded in base64."
+}

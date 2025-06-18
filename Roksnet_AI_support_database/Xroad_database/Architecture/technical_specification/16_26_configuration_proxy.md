@@ -1,0 +1,3 @@
+### 2.6 Configuration Proxy
+
+The configuration proxy (see \[[ARC-CP](#Ref_ARC-CP)\] for details) implements both the client part and the server part of the configuration distribution protocol (see Section [3.2](#32-protocol-for-downloading-configuration) ). The configuration proxy downloads the configuration, stores it, and makes it available for download. Thus, the configuration proxy can be used to increase system availability by creating an additional configuration source and reduce load on the central server.

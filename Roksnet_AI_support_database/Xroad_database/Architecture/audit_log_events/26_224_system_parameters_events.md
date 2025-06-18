@@ -1,0 +1,12 @@
+#### 2.2.4 System Parameters Events
+
+The audit log events related to the system parameters.
+
+| Event                                         | Data fields                                                                                                                                                                                                                                            |
+|-----------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Generate certificate request for TLS**      | subjectName - the subject name of the generated certificate request                                                                                                                                                                  |
+| **Import TLS certificate from file**          | certHash - the hash of the generated internal TLS certificatecertHashAlgorithm - the hash algorithm used to calculate value of the field certHash                                                                           |
+| Upload configuration anchor                   | anchorFileHash - the hash of the uploaded anchor fileanchorFileHashAlgorithm - the hash algorithm used to calculate value of the field anchorFileHashgeneratedAt - the UTC time when the anchor file was generated |
+| Add timestamping service                      | tspName - the name of the added timestamping servicetspUrl - the URL of the added timestamping service                                                                                                                      |  
+| Delete timestamping service                   | tspName - the name of the deleted timestamping servicetspUrl - the URL of the deleted timestamping service                                                                                                                  |
+| Generate new internal TLS key and certificate | certHash - the hash of the generated internal TLS certificatecertHashAlgorithm - the hash algorithm used to calculate value of the field certHash                                                                           |

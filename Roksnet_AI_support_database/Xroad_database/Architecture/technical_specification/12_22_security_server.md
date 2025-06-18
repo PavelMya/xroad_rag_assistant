@@ -1,0 +1,11 @@
+### 2.2 Security Server
+
+The security server (see \[[ARC-SS](#Ref_ARC-SS)\] for details) mediates service calls and service responses between information systems. The security server encapsulates the security aspects of the X-Road infrastructure: managing keys for signing and authentication, sending messages over secure channel, creating the proof value for messages with digital signatures, time-stamping (see Section [3.8](#38-time-stamping-protocol)) and logging. For the service client and the service provider information system, the security server offers a message protocol for SOAP and a message protocol for REST (see Section [3.1](#31-x-road-message-protocol)). The protocols are the same for both the client and the service provider, making the security server transparent to the applications.
+
+A single security server can host several organizations (multi-tenancy). The organization managing the security server is the server owner, the hosted organizations are security server clients.
+
+The security server manages two types of keys. The authentication keys are assigned to a security server and used for establishing cryptographically secure communication channels with the other security servers (see Section [3.3](#33-message-transport-protocol)). The signing keys are assigned to the security server's clients and used for signing the exchanged messages. The keys can be stored either on hard disk (software token) or on an SSCD.
+
+The security server downloads and caches up-to-date global configuration and certificate validity information (see Section [3.7](#37-ocsp-protocol)). Caching allows the security server to operate even when the information sources are unavailable.
+
+The security server contains an optional monitoring component that keeps track of environmental properties such as running processes, available disk space, installed packages etc. The monitoring component publishes this data via environmental monitoring service (see Section [3.11](#311-store-operational-monitoring-data)) and monitoring JMX (see Section [3.12](#312-operational-monitoring-query)) interfaces.

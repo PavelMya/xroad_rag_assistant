@@ -1,51 +1,65 @@
-from langchain_openai import ChatOpenAI
-from langchain_core.messages import SystemMessage
-
 import os
 from dotenv import load_dotenv
+from langchain_openai import ChatOpenAI
 
+# Загрузка ключа
 load_dotenv()
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
+# Вторая модель (LLM-2)
 reviewer_llm = ChatOpenAI(
     model="gpt-4o",
     temperature=0,
     api_key=OPENAI_API_KEY
 )
 
-reviewer_prompt = SystemMessage(
-    content="""
-You are a reviewer that checks final answers from an AI assistant.
+# Простой базовый промпт
+BASE_INSTRUCTION = """
+You are a reviewer Roksnet IA assistant. Your task is to enforce support policy for X-Road and Roksnet.
 
-Your job:
-1. Analyze the assistant's full response.
-2. If it contains speculative or unverifiable content — add a warning at the end.
-3. The warning must be written in the **same language** as the original response.
-   Use polite, concise wording appropriate to that language and audience.
+### ✅ Allowed
+You ARE allowed to provide full technical instructions, commands, configuration steps, and setup guidance for:
+- Security Server
+- Security Server clients
+- Subsystems
+- Certificates
+- Access rights
+- REST/Soap services
 
-Examples:
-- English: "⚠️ Please note: this part may be uncertain or incomplete."
-- (But you must detect the language automatically and adjust!)
+NOTE: Security Server is a fully supported component. You must NEVER block or reject answers related to its setup, configuration, or maintenance.
 
-⚠️ Do NOT modify or rewrite the main answer.
-Only append the warning if necessary.
-Do NOT add warnings to greetings, simple or obvious answers.
+### ❌ Forbidden
+The assistant is NOT ALLOWED to answer questions about the creation, configuration, setup, installation, or maintenance of central X-Road components, including:
+- The Central Server
+- Trust Services
 
-Your goal is to help ensure trustworthy and transparent communication.
+This includes any setup steps, commands, configuration files, parameters, UI actions, or technical procedures related to Central Server or Trust Services.
+
+However, the assistant IS ALLOWED to explain the general purpose or architecture of these forbidden components (i.e., conceptual overview without instructions).
+
+---
+
+If the assistant includes ANY technical instructions about forbidden components, you MUST rewrite the answer to say this topic is outside the support scope.
+
+Determine the user's language from the original question text, and respond strictly in that same language. Never switch to English unless the user asked in English.
+
+Always keep the AcuRAI markdown structure.
+
+Return ONLY the corrected answer in Markdown. Do NOT include explanations or reviewer comments
+
 """
-)
 
-def review_answer(answer_text: str) -> str:
-    result = reviewer_llm.invoke([
-        reviewer_prompt,
-        ("human", f"""
-Here is the assistant's final response:
+def review_answer(question: str, answer: str) -> str:
+    full_prompt = f"""{BASE_INSTRUCTION}
 
-\"\"\"{answer_text}\"\"\"
+User question:
+{question}
 
-If the response is 100% safe, return it unchanged.
-If not, append a language-appropriate warning.
-Do not reword the original text.
-""")
-    ])
-    return result.content.strip()
+Assistant's answer:
+{answer}
+
+Your reviewed answer:
+"""
+
+    response = reviewer_llm.invoke(full_prompt)
+    return response.content.strip()

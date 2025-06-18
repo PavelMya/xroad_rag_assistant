@@ -1,0 +1,5 @@
+## 3 Confidentiality
+
+For compliance with the security principle of confidentiality, the objective is to limit visibility of X-Road assets (organisational data) to the actors (registered X-Road organisational members) that are authenticated and authorised to see the data. With assurance of confidentiality, the threat being mitigated is the unintended revealing of X-Road assets to unauthorised third parties. 
+    
+X-Road messages transmitted over the public Internet are secured using digital signatures and encryption. The motivation for bidirectional HTTP over Transport Layer Security (TLS) is to enforce anti-eavesdropping and anti-tampering protections to ensure the integrity and privacy of the messages exchanged between X-Road actors. X-Road-internal TLS certificates are used for setting up the TLS connection between the Security Server and information systems that provide and consume services.

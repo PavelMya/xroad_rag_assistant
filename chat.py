@@ -1,187 +1,110 @@
 import os
 import uuid
 from dotenv import load_dotenv
-from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
-from langchain_core.messages import SystemMessage
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from langchain_community.vectorstores import FAISS
-from langchain.memory import ConversationBufferMemory
-from langchain.chains import create_history_aware_retriever, create_retrieval_chain
+from langdetect import detect
+from reviewer import review_answer  # вторая модель
 
-from reviewer import review_answer
-from database import init_db, save_interaction  # 👈 База данных
-
-# Load environment variables
+# === Загрузка переменных окружения ===
 load_dotenv()
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
-# Init database
-init_db()
-
-# Initialize the OpenAI model
+# === Инициализация LLM (GPT-4o) ===
 llm = ChatOpenAI(
     model="gpt-4o",
-    temperature=0.2,
+    temperature=0,
     api_key=OPENAI_API_KEY
 )
 
-# Load FAISS vector store
+# === Загрузка FAISS-векторной базы ===
 vectorstore = FAISS.load_local(
-    folder_path="faiss_index",
-    embeddings=OpenAIEmbeddings(api_key=OPENAI_API_KEY),
+    "faiss_index/faiss_index",
+    OpenAIEmbeddings(),
+    index_name="index",
     allow_dangerous_deserialization=True
 )
 
-# Initialize memory for chat history
-memory = ConversationBufferMemory(
-    return_messages=True,
-    memory_key="chat_history"
-)
+# === AcuRAI-инструкция ===
+SYSTEM_PROMPT = """
+You are Roksnet AI Asistant. A professional assistant for diagnosing and solving issues related to Roksnet Services, X-Road, and DevOps environments (Linux, system configuration, certificates, services, etc).
 
-# --- AcuRAI SYSTEM PROMPT ---
-acurai_system = SystemMessage(
-    content="""
-You are a senior assistant for system administrators using X-Road.
+Your job is to help users clearly understand what went wrong, what the root cause of problem, and how to resolve it.
 
-Your job is to deeply analyze the user's technical problem and give a complete, precise and practical answer.
-
-Always reason through the following steps (internally), but show only the final ANSWER.
+You must structure your answers using the following markdown format and return only what’s inside this format:
 
 ---
-ANSWER:
-✅ What the user is trying to do
-🔍 Possible root causes (numbered list)
-🔧 Steps to investigate:
-- With **commands**, **paths**, **logs**
-- What to look for (e.g., errors, confirmation lines)
-📄 Example config snippets (if applicable)
-📂 Exact file locations and required permissions
-📘 Source documentation references
-    If the answer is about X-Road, link to the corresponding official page on https://docs.x-road.global
-    – Never link to GitHub .md files or internal Markdown documents
-    – Prefer URLs like https://docs.x-road.global/security-server/ or https://docs.x-road.global/central-server/ based on topic
-    – Do not invent links. Only include real, existing URLs.
-    Always prefer clean, top-level URLs and do not reference GitHub or markdown files directly.
-🧪 Can the issue be verified via CLI or UI?
-🪵 What logs to check?
-⚠️ Are there tricky or common mistakes?
 
-Style:
-- Use markdown formatting (headers, code blocks, bullet points)
-- Use emoji bullets for clarity
-- Avoid vague phrases — be concrete
+## 🔍 Problem analysis
 
-Only output the ANSWER section. Do not show your reasoning process.
+Explain clearly what the user's problem is about, based on their question. Clarify what part of the system it concerns (e.g., registration, certificate renewal, service errors).
+
+## 🧠 Root cause
+
+Provide the most likely reason for this issue, based on context from retrieved documentation and general system knowledge. Be logical and brief.
+
+## 🛠 Solution
+
+Give a precise and actionable step-by-step guide on how to solve the issue. Include commands, file paths, or configuration details if relevant. Make sure the solution is tailored to the question.
+
+## 📘 Source documentation references
+
+If your answer is based on specific documents, include the title of the document and link to the official source (e.g., https://docs.x-road.global/...)
+
+## ➕ Suggested next steps
+
+Suggest 1–3 helpful and specific next actions that the user can take to continue solving their problem. Then, in a separate sentence, ask the user a natural follow-up question, offering further help.
+
+For example:
+- “Would you like help creating the config file?”
+- “Want me to show the command to check logs?”
+- “Shall I help you inspect the firewall rules?”
+
+Always match the language of the user's question. These suggestions must be directly related to the current issue — never generic advice.
+
+
+---
+
+Rules:
+
+- DO NOT invent facts. If you don't know something — clearly say that and suggest what to check next.
+- DO NOT respond with “As an AI language model…”.
+- Always greet the user naturally if they greet you.
+- Only use retrieved documentation if it’s relevant.
+- Answer in the same language the user is using.
 """
-)
 
-# --- AcuRAI Persona ---
-acurai_persona_instruction = SystemMessage(
-    content="""
-You are an AI consultant specializing in X-Road and system administration.
+# === Главная функция запроса ===
+def enhanced_query(question: str):
+    question_id = str(uuid.uuid4())
+    lang = detect(question)
 
-You are NOT a general-purpose assistant. Your role is to help engineers and administrators with topics like:
-- X-Road installation, configuration, ACME, logs, and errors,
-- APIs, DevOps, Linux, and infrastructure issues.
+    # 🔁 NEW: поиск в FAISS
+    docs = vectorstore.similarity_search(question, k=4)
+    context = "\n\n".join([doc.page_content for doc in docs]) if docs else "No documentation retrieved."
 
-Even for non-technical questions, maintain your "persona":
-- Explain that you're an X-Road assistant.
-- Do NOT say you can talk about anything.
-- Avoid phrases like "I can answer any question", even if asked about weather or cats.
+    # 🔁 NEW: единый prompt даже если документа нет
+    prompt = f"""{SYSTEM_PROMPT}
 
-Style:
-- Friendly but professional.
-- Give clear, focused responses without unnecessary chatter.
-- Be respectful and concise.
-- Always remember: you're a technical assistant, not a general AI.
-"""
-)
+Documentation context:
+{context}
 
-# --- AcuRAI Prompt ---
-acurai_prompt = ChatPromptTemplate.from_messages([
-    acurai_system,
-    MessagesPlaceholder("chat_history"),
-    ("human", "{input}")
-])
+User question: {question}
 
-# --- Retriever ---
-retriever = create_history_aware_retriever(
-    llm=llm,
-    retriever=vectorstore.as_retriever(search_kwargs={"k": 5}),
-    prompt=acurai_prompt
-)
+Answer:"""
 
-combine_chain = acurai_prompt | llm
-
-acurai_chain = create_retrieval_chain(
-    retriever=retriever,
-    combine_docs_chain=combine_chain
-)
-
-# --- Friendly chain ---
-def friendly_chain(user_input, chat_history):
-    response = llm.invoke([
-        acurai_persona_instruction,
-        *chat_history,
-        ("human", user_input)
-    ])
-    return response.content
-
-# --- Classification ---
-def is_technical_llm(question: str) -> bool:
-    classification_prompt = [
-        SystemMessage(content="You are a classifier. Your job is to decide if a question is technical."),
-        ("human", f"""
-Question: "{question}"
-
-Is it a technical question about Linux, X-Road, DevOps, APIs, infrastructure or system administration?
-
-Reply only with YES or NO.
-""")
-    ]
-    result = llm.invoke(classification_prompt)
-    return "yes" in result.content.strip().lower()
-
-# --- Enhanced query with DB + reviewer ---
-def enhanced_query(query: str, session_id="default", client_id="0") -> dict:
-    # 1. Answer from GPT
-    if is_technical_llm(query):
-        result = acurai_chain.invoke({
-            "input": query,
-            "chat_history": memory.chat_memory.messages
-        })
-        raw_answer = result["answer"].content if hasattr(result["answer"], "content") else str(result["answer"])
+    # 🔁 NEW: если документация пуста, предупредим в ответе
+    if not docs:
+        raw_answer = "ℹ️ *Документация по этому вопросу не найдена. Ответ основан на общих знаниях:*\n\n"
+        answer = raw_answer + llm.invoke(prompt).content
     else:
-        raw_answer = friendly_chain(query, memory.chat_memory.messages)
+        answer = llm.invoke(prompt).content
 
-    # 2. Pass through reviewer
-    reviewed_answer = review_answer(raw_answer)
-
-    # 3. Save to memory
-    memory.chat_memory.add_user_message(query)
-    memory.chat_memory.add_ai_message(reviewed_answer)
-
-    # 4. Save to DB and get question_id
-    question_id = save_interaction(
-        question=query,
-        answer_llm1=raw_answer,
-        answer_llm2=reviewed_answer,
-        session_id=session_id,
-        client_id=client_id
-    )
+    # Проверка второй моделью (LLM2)
+    reviewed = review_answer(question, answer)
 
     return {
-        "answer": reviewed_answer,
-        "question_id": question_id
+        "answer": reviewed,
+        "question_id": question_id,
+        "language": lang
     }
-
-# --- Console test (debug only) ---
-if __name__ == "__main__":
-    session_id = str(uuid.uuid4())  # simulate session
-    while True:
-        user_input = input("You: ")
-        if user_input.lower() in ("exit", "quit"):
-            break
-        response = enhanced_query(user_input, session_id=session_id)
-        print("GPT:", response["answer"])
-        print("🧾 Question ID:", response["question_id"])

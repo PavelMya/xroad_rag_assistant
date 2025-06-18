@@ -1,0 +1,3 @@
+### 4.1 Integration Testing
+
+The integration tests will be used for testing the required functionality of the security servers and the operational monitoring daemon working together, while regular X-Road requests as well as operational monitoring and health data requests are handled. The goal is to cover the main functionality with automated tests. Manual tests will be carried out by the development team as needed, as well as during acceptance testing if necessary. The descriptions of manual tests will be provided in \[[TEST-OPMON](#TEST-OPMON)\].

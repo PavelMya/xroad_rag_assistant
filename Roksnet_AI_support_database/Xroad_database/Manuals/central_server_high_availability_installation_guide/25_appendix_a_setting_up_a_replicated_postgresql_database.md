@@ -1,0 +1,7 @@
+## Appendix A. Setting up a replicated PostgreSQL database
+
+In this configuration, the Central Server nodes share an external PostgreSQL database that uses a master - standby configuration with streaming replication. In case of master failure, the Central Server nodes can automatically start using the standby once it has been promoted to master. The promoting is manual by default, but can be automated by custom scripts or using third-party tools. Because the database standby is read-only and the Central Server nodes require write access, this setup does not provide horizontal scalability.
+
+It is assumed that a PostgreSQL database is installed on two or more similar hosts. It is recommended to use a recent PostgeSQL version (10 or later). One of these hosts will be configured as a master, and others will replicate the master database (standby). The master node can have an existing database, but the standby databases will be initialized during the installation.
+
+A thorough discussion about PostgreSQL replication and high-availability is out of the scope of this guide. For more details, see e.g. [PostgreSQL documentation about high-availability](https://www.postgresql.org/docs/current/high-availability.html).

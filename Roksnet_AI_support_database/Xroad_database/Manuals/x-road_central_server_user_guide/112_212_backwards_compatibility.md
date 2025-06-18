@@ -1,0 +1,4 @@
+### 21.2 Backwards Compatibility
+
+When Central Server is configured to use EC based signing keys, then Security Servers prior to version 7.6.0 are not be able to use the global configuration. In other words, EC based internal signing keys can be used only when all the Security Servers in the local ecosystem use X-Road version 7.6.0 or later. Instead, in a federated setup, EC based external signing keys can be used only when all the Security Servers in all the federated ecosystems use X-Road version 7.6.0 or later.
+Before migrating to EC based configuration signing keys, always remember to make sure that all the Security Servers in all the affected ecosystems use X-Road version 7.6.0 or later.

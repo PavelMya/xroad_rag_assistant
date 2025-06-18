@@ -1,0 +1,7 @@
+#### 11.1.4 Timestamping Parameters
+
+1.  `timestamp-immediately` – if set to true, the timestamps are created synchronously with the message exchange, i.e., one timestamp is created for a request and another for a response. This is a security policy to guarantee the timestamp at the time of logging the message, but if the timestamping fails, the message exchange fails as well, and if load to the Security Server increases, then the load to the timestamping service increases as well. The value of this parameter defaults to false for better performance and availability. In case the value of the parameter is false then the timestamping is performed as a periodic background process (the time period is determined in the X-Road governing agency and propagated to the Security Servers by global configuration) and signatures stored during the time period (see parameter `timestamp-records-limit`) are timestamped in one batch.
+
+2.  `timestamp-records-limit` – maximum number of signed messages that can be timestamped in one batch. The message exchanging load (messages per minute) and the timestamping interval of the Security Server must be taken into account when changing the default value of this parameter. Do not modify this parameter without a good reason. Defaults to `10000`.
+
+3.  `acceptable-timestamp-failure-period` – time period in seconds, for how long the asynchronous timestamping is allowed to fail before message exchange between Security Servers is stopped. Set to `0` to disable this check. Defaults to `14400`.
