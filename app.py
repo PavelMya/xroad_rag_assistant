@@ -69,6 +69,17 @@ def admin_page(request: Request):
 @app.post("/chat", response_model=QueryResponse)
 async def chat_endpoint(request: QueryRequest):
     response = enhanced_query(request.question)
+
+    # 💾 Сохраняем после получения ответа
+    from database import save_interaction
+    save_interaction(
+        question=request.question,
+        answer_llm1=response["answer"],
+        answer_llm2=response["answer"],  # или другой источник, если есть
+        session_id="default_session",
+        client_id="0"
+    )
+
     return {
         "answer": response["answer"],
         "sources": [],
