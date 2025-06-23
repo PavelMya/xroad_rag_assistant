@@ -141,6 +141,31 @@
     button:hover {
       background-color: #0056b3;
     }
+
+    /* ✅ ЗАМЕНА ИНДИКАТОРА — теперь это сообщение внутри чата */
+    .thinking-indicator {
+      align-self: flex-start;
+      color: #555;
+      font-style: italic;
+      padding: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .loader {
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #007bff;
+      border-radius: 50%;
+      width: 18px;
+      height: 18px;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
@@ -175,6 +200,15 @@
       chatBox.scrollTop = chatBox.scrollHeight;
       input.value = "";
 
+      // ✅ Добавляем thinking-indicator
+      const thinkingId = `thinking-${Date.now()}`;
+      chatBox.innerHTML += `
+        <div class="message thinking-indicator" id="${thinkingId}">
+          <div class="loader"></div>
+          <span>GPT is thinking...</span>
+        </div>`;
+      chatBox.scrollTop = chatBox.scrollHeight;
+
       try {
         const response = await fetch("/chat", {
           method: "POST",
@@ -183,27 +217,66 @@
         });
 
         const data = await response.json();
-        const answerHTML = marked.parse(data.answer || "No response");
+        const markdown = marked.parse(data.answer || "No response");
         const questionId = data.question_id;
 
-        chatBox.innerHTML += `
-          <div class="message bot-message">
-            ${answerHTML}
-            <div class="feedback">
-              <button onclick="sendIncorrect('${questionId}', this)">❌ Incorrect answer</button>
-              <button onclick="toggleSuggestInput(this)">💬 Suggest your own answer</button>
-              <div class="suggest-box" style="display: none;">
-                <input type="text" placeholder="Your suggestion...">
-                <button onclick="submitSuggestion(this, '${questionId}')">Submit</button>
-              </div>
+        // Удаляем "GPT is thinking..."
+        document.getElementById(thinkingId).remove();
+
+        // ✅ Создаём элемент для "typing effect"
+        const messageContainer = document.createElement("div");
+        messageContainer.className = "message bot-message";
+        chatBox.appendChild(messageContainer);
+
+        await typeMessage(markdown, messageContainer);
+
+        messageContainer.innerHTML += `
+          <div class="feedback">
+            <button onclick="sendIncorrect('${questionId}', this)">❌ Incorrect answer</button>
+            <button onclick="toggleSuggestInput(this)">💬 Suggest your own answer</button>
+            <div class="suggest-box" style="display: none;">
+              <input type="text" placeholder="Your suggestion...">
+              <button onclick="submitSuggestion(this, '${questionId}')">Submit</button>
             </div>
           </div>
         `;
       } catch (err) {
+        document.getElementById(thinkingId).remove();
         chatBox.innerHTML += `<div class="message bot-message">⚠️ Error fetching answer.</div>`;
       }
 
       chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    // ✅ ЭФФЕКТ ПОСИМВОЛЬНОГО ВЫВОДА
+    async function typeMessage(markdown, container) {
+      const lines = markdown.split("\n");
+
+      for (const line of lines) {
+        const html = marked.parse(line);
+        const div = document.createElement("div");
+        container.appendChild(div);
+
+    // Только для простого текста – анимируем
+        if (!html.includes("<") || html.startsWith("<p>")) {
+          await typeLine(html, div);
+        } else {
+        // Прочие блоки — показываем сразу
+          div.innerHTML = html;
+        }
+
+        await new Promise(r => setTimeout(r, 100)); // задержка между блоками
+      }
+    }
+
+// Печатает по символам один параграф
+    async function typeLine(html, element) {
+      const text = html.replace(/<\/?[^>]+(>|$)/g, ""); // убираем теги для анимации
+      for (let i = 0; i < text.length; i++) {
+        element.textContent = text.substring(0, i + 1);
+        await new Promise(r => setTimeout(r, 8));
+      }
+      element.innerHTML = html; // вернуть с форматированием
     }
 
     async function sendIncorrect(questionId, btn) {

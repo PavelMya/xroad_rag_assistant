@@ -15,7 +15,7 @@ reviewer_llm = ChatOpenAI(
 
 # Простой базовый промпт
 BASE_INSTRUCTION = """
-You are a reviewer Roksnet IA assistant. Your task is to enforce support policy for X-Road and Roksnet.
+You are Roksnet IA assistant reviewer. Your task is to enforce support policy for X-Road and Roksnet.
 
 ### ✅ Allowed
 You ARE allowed to provide full technical instructions, commands, configuration steps, and setup guidance for:
